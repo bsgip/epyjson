@@ -1,0 +1,175 @@
+{
+  "units": {
+    "current": 1000.0,
+    "impedance": 1,
+    "length": 1,
+    "power": 1000000.0,
+    "energy": 1000000.0,
+    "voltage": 1000.0
+  },
+  "voltage_type": "lg",
+  "components": {
+    "infeeder_1": {
+      "Infeeder": {
+        "cons": [
+          {
+            "node": "node_1",
+            "phs": [
+              "A"
+            ]
+          }
+        ],
+        "v_setpoint": 11.0
+      }
+    },
+    "node_1": {
+      "Node": {
+        "phs": [
+          "A"
+        ],
+        "v_base": 11.0,
+        "user_data": {
+          "voltage_level": "mv",
+          "v_min": 11.0,
+          "v_max": 11.0
+        }
+      }
+    },
+    "transformer_1": {
+      "Transformer": {
+        "cons": [
+          {
+            "node": "node_1",
+            "phs": [
+              "A"
+            ]
+          },
+          {
+            "node": "node_2",
+            "phs": [
+              "A"
+            ]
+          }
+        ],
+        "in_service": true,
+        "vector_group": "yy0",
+        "v_winding_base": [
+          11.0,
+          0.3984
+        ],
+        "nom_turns_ratio": [
+          27.610,
+          0.0
+        ],
+        "z": [[0, 0], [1e-6, 0.0]],
+        "tap_side": "primary",
+        "tap_range": [0, 0],
+        "tap_factor": 0.025,
+        "taps": [
+          0 
+        ],
+        "n_winding_pairs": 1,
+        "is_grounded_p": true,
+        "is_grounded_s": true,
+        "user_data": {
+        }
+      }
+    },
+    "node_2": {
+      "Node": {
+        "phs": [
+          "A"
+        ],
+        "v_base": 0.3984,
+        "user_data": {
+          "voltage_level": "lv",
+          "v_min": 0.3586,
+          "v_max": 0.4382
+        }
+      }
+    },
+    "line_1": {
+      "Line": {
+        "cons": [
+          {
+            "node": "node_2",
+            "phs": [
+              "A"
+            ]
+          },
+          {
+            "node": "node_3",
+            "phs": [
+              "A"
+            ]
+          }
+        ],
+        "length": 1.0,
+        "z": [1.0, 0.0],
+        "z0": [1.0, 0.0],
+        "in_service": true,
+        "user_data": {
+        }
+      }
+    },
+    "node_3": {
+      "Node": {
+        "phs": [
+          "A"
+        ],
+        "v_base": 0.3984,
+        "user_data": {
+          "voltage_level": "lv",
+          "v_min": 0.3586,
+          "v_max": 0.4382
+        }
+      }
+    },
+    "load_1": {
+      "Load": {
+        "cons": [
+          {
+            "node": "node_2",
+            "phs": [
+              "A"
+            ]
+          }
+        ],
+        "in_service": true,
+        "wiring": "wye",
+        "s_nom": [
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "user_data": {
+          "nmi": "nmi_1"
+        }
+      }
+    },
+    "load_2": {
+      "Load": {
+        "cons": [
+          {
+            "node": "node_3",
+            "phs": [
+              "A"
+            ]
+          }
+        ],
+        "in_service": true,
+        "wiring": "wye",
+        "s_nom": [
+          [
+            14.26e-3,
+            0.0
+          ]
+        ],
+        "user_data": {
+          "nmi": "nmi_2"
+        }
+      }
+    }
+  }
+}

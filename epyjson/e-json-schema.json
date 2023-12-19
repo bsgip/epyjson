@@ -1,0 +1,469 @@
+{
+    "$id": "http://bsgip.com/e-json",
+    "type": "object",
+    "additionalProperties": true,
+    "properties": {
+        "components": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/component"
+            }
+        },
+        "units": {
+            "$ref": "#/definitions/units"
+        },
+        "user_data": {
+            "$ref": "#/definitions/userData"
+        },
+        "voltage_type": {
+            "description": "Line to line (ll) or line to ground (lg)",
+            "type": "string",
+            "enum": [
+                "ll",
+                "lg"
+            ]
+        }
+    },
+    "required": [
+        "components",
+        "units"
+    ],
+    "definitions": {
+        "positiveNumber": {
+            "type": "number",
+            "minimum": 0
+        },
+        "complexNumber": {
+            "anyOf": [{"type": "number"}, {"$ref": "#/definitions/twoNumberArray"}]
+        },
+        "twoNumberArray": {
+            "type": "array",
+            "items": {
+                "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "twoPositiveNumberArray": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/positiveNumber"
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "twoComplexNumberArray": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/complexNumber"
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "complexArray": {
+            "type": "array",
+            "items": {
+                "$ref":  "#/definitions/complexNumber"
+            }
+        },
+        "complexMatrix": {
+            "type": "array",
+            "items": {
+                "$ref":  "#/definitions/complexArray"
+            }
+        },
+        "phs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "string"
+            }
+        },
+        "userData": {
+            "type": "object"
+        },
+        "connection": {
+            "type": "object",
+            "properties": {
+                "node": {
+                    "type": "string"
+                },
+                "phs": {
+                    "$ref": "#/definitions/phs"
+                }
+            },
+            "required": [
+                "node",
+                "phs"
+            ]
+        },
+        "oneConnection": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+                "$ref": "#/definitions/connection"
+            }
+        },
+        "twoConnections": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+                "$ref": "#/definitions/connection"
+            }
+        },
+        "units": {
+            "type": "object",
+            "properties": {
+                "current": {
+                    "$ref": "#/definitions/positiveNumber"
+                },
+                "voltage": {
+                    "$ref": "#/definitions/positiveNumber"
+                },
+                "power": {
+                    "$ref": "#/definitions/positiveNumber"
+                },
+                "impedance": {
+                    "$ref": "#/definitions/positiveNumber"
+                },
+                "length": {
+                    "$ref": "#/definitions/positiveNumber"
+                },
+                "energy": {
+                    "$ref": "#/definitions/positiveNumber"
+                }
+            },
+            "required": [
+                "current",
+                "voltage",
+                "power",
+                "impedance",
+                "length",
+                "energy"
+            ],
+            "additionalProperties": false
+        },
+        "component": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+                "Node": {
+                    "$ref": "#/definitions/node"
+                },
+                "Transformer": {
+                    "$ref": "#/definitions/transformer"
+                },
+                "Line": {
+                    "$ref": "#/definitions/line"
+                },
+                "Load": {
+                    "$ref": "#/definitions/load"
+                },
+                "Gen": {
+                    "$ref": "#/definitions/gen"
+                },
+                "Infeeder": {
+                    "$ref": "#/definitions/infeeder"
+                }
+            },
+            "additionalProperties": false
+        },
+        "node": {
+            "type": "object",
+            "properties": {
+                "phs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                },
+                "v_base": {
+                    "$ref": "#/definitions/positiveNumber"
+                },
+                "lat_long": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "xy": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                }
+            },
+            "required": [
+                "phs",
+                "v_base"
+            ]
+        },
+        "lineImpedanceZZ0": {
+            "type": "object",
+            "properties": {
+                "z": {
+                    "$ref": "#/definitions/complexNumber"
+                },
+                "z0": {
+                    "$ref": "#/definitions/complexNumber"
+                },
+                "b_chg": {
+                    "type": "number"
+                }
+            },
+            "required": ["z", "z0"]
+        },
+        "lineImpedanceYBus": {
+            "properties": {
+                "y_bus": {
+                    "#ref": "#/definitions/complexMatrix"
+                }
+            },
+            "required": ["y_bus"]
+        },
+        "transformerTapChanger": {
+            "description": "Tap changer for a Transformer",
+            "type": "object",
+            "properties": {
+                "indep_taps": {
+                    "type": "boolean"
+                },
+                "winding_side": {
+                    "type": "string",
+                    "enum": [
+                        "primary",
+                        "secondary"
+                    ]
+                },
+                "winding_idx": {
+                    "anyOf": [
+                        {
+                            "type": "integer",
+                            "minimum": 0
+                        },
+                        {
+                            "type": "string",
+                            "const": "avg"
+                        }
+                    ]
+                },
+                "voltage_range": {
+                    "$ref": "#/definitions/twoPositiveNumberArray"
+                },
+                "ctrl": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "manual"
+                    ]
+                },
+                "ldc_impedance": {
+                    "$ref": "#/definitions/complexNumber"
+                },
+                "delay_seconds": {
+                    "type": "number"
+                }
+            }
+        },
+        "transformer": {
+            "type": "object",
+            "properties": {
+                "cons": {"$ref": "#/definitions/twoConnections"},
+                "vector_group": {
+                    "type": "string"
+                },
+                "nom_turns_ratio": {
+                    "$ref": "#/definitions/complexNumber"
+                },
+                "v_winding_base": {
+                    "$ref": "#/definitions/twoPositiveNumberArray"
+                },
+                "tap_range": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "tap_factor": {
+                    "type": "number"
+                },
+                "tap_side": {
+                    "type": "string"
+                },
+                "tap_changer": {
+                    "$ref": "#/definitions/transformerTapChanger"
+                },
+                "z": {
+                    "$ref": "#/definitions/twoComplexNumberArray"
+                },
+                "z0": {
+                    "$ref": "#/definitions/twoComplexNumberArray"
+                },
+                "s_max": {
+                    "type": "number"
+                },
+                "taps": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "in_service": {
+                    "type": "boolean"
+                },
+                "user_data": {
+                    "$ref": "#/definitions/userData"
+                }
+            },
+            "required": [
+                "cons",
+                "nom_turns_ratio",
+                "v_winding_base",
+                "z"
+            ]
+        },
+        "line": {
+            "type": "object",
+            "properties": {
+                "cons": {"$ref": "#/definitions/twoConnections"},
+                "i_max": {
+                    "type": ["number", "null"]
+                },
+                "in_service": {
+                    "type": "boolean"
+                },
+                "length": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "cons",
+                "length"
+            ],
+            "oneOf": [
+                {"$ref": "#/definitions/lineImpedanceZZ0"},
+                {"$ref": "#/definitions/lineImpedanceYBus"}
+            ]
+        },
+        "elementWiring": {
+            "description": "delta (LL) or wye (LG).",
+            "type": "string",
+            "enum": [
+                "delta",
+                "wye"
+            ]
+        },
+        "load": {
+            "title": "Load Element",
+            "description": "Represents a load network element",
+            "examples": [],
+            "type": "object",
+            "properties": {
+                "cons": {"$ref": "#/definitions/oneConnection"},
+                "wiring": {
+                    "$ref": "#/definitions/elementWiring"
+                },
+                "s_nom": {
+                    "title": "S Nominal",
+                    "description": "Optional. Nominal complex power value for the Load. `s_nom` values must be consistent Load phasing and wiring. These values can be used to calculate static Power Flow when no other measurement data is available.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/complexNumber"
+                    },
+                    "minItems": 1,
+                    "maxItems": 3
+                }
+            },
+            "required": [
+                "cons"
+            ]
+        },
+        "gen": {
+            "title": "Generator Element",
+            "description": "Represents a generator network element",
+            "examples": [],
+            "type": "object",
+            "properties": {
+                "cons": {"$ref": "#/definitions/oneConnection"},
+                "wiring": {
+                    "$ref": "#/definitions/elementWiring"
+                },
+                "p_min": {
+                    "description": "Minimum power (load convention). ",
+                    "type": "number"
+                },
+                "p_max": {
+                    "description": "Maximum power (load convention).",
+                    "default": 0,
+                    "type": "number"
+                },
+                "q_min": {
+                    "description": "Minimum reactive power (load convention). ",
+                    "type": "number"
+                },
+                "q_max": {
+                    "description": "Maximum reactive power (load convention).",
+                    "default": 0,
+                    "type": "number"
+                },
+                "cost": {
+                    "description": "Cost, in (cost unit) per (energy unit), e.g. $/kWh",
+                    "default": 0,
+                    "type": "number"
+                },
+                "has_avr": {
+                    "description": "Automatic voltage regulation",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "v_setpoint": {
+                    "description": "Line to ground voltage magnitude setpoint",
+                    "type": "number"
+                },
+                "has_agc": {
+                    "description": "Automatic generation control",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "in_service": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "cons",
+                "wiring"
+            ]
+        },
+        "infeeder": {
+            "type": "object",
+            "properties": {
+                "cons": {"$ref": "#/definitions/oneConnection"},
+                "in_service": {
+                    "type": "boolean"
+                },
+                "v_setpoint": {
+                    "$ref": "#/definitions/positiveNumber",
+                    "description": "Line to ground voltage magnitude setpoint"
+                },
+                "user_data": {
+                    "$ref": "#/definitions/userData"
+                }
+            },
+            "required": [
+                "cons",
+                "v_setpoint"
+            ]
+        }
+    }
+}
