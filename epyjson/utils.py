@@ -1,3 +1,5 @@
+from ordered_set import OrderedSet
+
 from .ejson import *
 
 
@@ -27,6 +29,72 @@ def c2a(c: complex) -> List[float]:
     '''
 
     return [c.real, c.imag]
+
+
+def remove_hanging_nodes(netw: EJson):
+    '''
+    Remove hanging nodes: a node that terminates a line and has no other attached components.
+    '''
+    to_remove = []
+    for comp in netw.components('Node'):
+        adj = list(netw.connections_from(comp.cid))
+        if len(adj) == 1:
+            comp_to = netw.component(adj[0][1])
+            if comp_to.ctype == 'Line':
+                to_remove.append(comp.cid)
+
+    for cid in to_remove:
+        netw.remove_component(cid)
+
+
+def remove_out_of_service(netw: EJson):
+    '''
+    Remove components that are out of service.
+
+    Args:
+        graph: e-JSON graph, result of make_graph(...) 
+    '''
+    
+    for comp in list(netw.components()):
+        if not comp.is_in_service():
+            netw.remove_component(comp.cid)
+    
+    netw.remove_unconnected_nodes()
+    assert [x.cid for x in netw.components()] == ['in1', 'nd1']
+
+
+def collapse_elem(netw: EJson, cid):
+    '''
+    Remove component cid (normally a line) and coalesce the second and
+    subsequent connected nodes into the first connected node.
+    '''
+
+    cons = list(netw.connections_from(cid))
+    netw.remove_component(cid)
+    nodes = [x[1] for x in cons]
+    for node in nodes[1:]:
+        for con in list(netw.connections_from(node)):
+            netw.reconnect_elem(con[1], {node: nodes[0]})
+
+    for node in nodes[1:]:
+        assert len(list(netw.connections_from(node))) == 0
+        netw.remove_component(node)
+
+
+def merge_short_circuits(netw: EJson) -> EJson:
+    '''
+    Merge short circuit lines where possible. 
+    
+    A short circuit line is a line that fully short circuits all phases between two nodes. In such cases, we can
+    simply remove the line and merge the two nodes.
+    '''
+
+    merges = [l.cid for l in netw.components('Line') if is_short_circuit(l, netw)]
+    
+    for cid in merges:
+        collapse_elem(netw, cid)
+
+    return netw
 
 
 def is_zero_impedance(comp: Component) -> bool:
@@ -61,10 +129,197 @@ def is_short_circuit(comp: Component, netw: EJson) -> bool:
     if not is_zero_impedance(comp):
         return False
 
-    l_phs = [con['phs'] for con in comp.cdata['cons']]
-    nd_cds = [netw.graph.nodes[con['node']]['data'][1] for con in comp.cdata['cons']]
-    nd_phs = [x['phs'] for x in nd_cds]
+    l_phs = [con[3]['phs'] for con in netw.connections_from(comp.cid)]
+    nds = [netw.component(con[1]) for con in netw.connections_from(comp.cid)]
+    nd_phs = [x.cdata['phs'] for x in nds]
     return l_phs == nd_phs
+
+
+def merge_dups(netw: EJson) -> EJson:
+    '''
+    Merge duplicated lines.
+    '''
+
+    all_lines = list(netw.components('Line'))
+    all_nodes = list(netw.components(nodes_only=True))
+
+    dups = {}
+    for comp in all_lines:
+        cons = netw.connections_from(comp.cid)
+        cons_sorted = sorted(cons, key=lambda con: f'{con[1]}:{con[2]}')
+        con_nids = [x[1] for x in cons_sorted]
+        con_phs = [','.join(x[3]['phs']) for x in cons_sorted]
+        in_serv = comp.is_in_service()
+        k = '|'.join([','.join(x) for x in zip(con_nids, con_phs)] + [str(in_serv)])
+        dups.setdefault(k, []).append(comp)
+
+    dups = [v for k, v in dups.items() if len(v) > 1]
+    
+    def ys(l):
+        z = a2c(l['z'])
+        z0 = a2c(l['z0'])
+        if z0 == 0.0 and z != 0.0:
+            # KLUDGE: To avoid NaN in this situation, we can assume z0 = z.
+            z0 = z
+
+        return 1.0 / (l['length'] * np.array([z, z0]))
+
+    for dup in dups:
+        # We know that all lines in dup have the same nodes, the same in_service status and the same phasing.
+        min_length = min([x.cdata['length'] for x in dup])
+        l0 = dup[0]
+        drop = []
+        ys_merged = ys(l0.cdata)
+        for l in dup[1:]:
+            ys_merged += ys(l.cdata)
+            drop.append(l.cid)
+
+        for x in drop:
+            netw.remove_component(x)
+
+        zs_merged = (1.0 / ys_merged) / min_length
+
+        l0.cdata['z'] = [zs_merged[0].real, zs_merged[0].imag]
+        l0.cdata['z0'] = [zs_merged[1].real, zs_merged[1].imag]
+        l0.cdata['length'] = min_length
+
+    return netw
+
+
+def merge_strings(netw: EJson):
+    '''
+    Merge strings of lines where possible. 
+    
+    A string is a (line, node, ... , node, line) sequence whose nodes do not connect to any other elements in the
+    sequence, and whose connection phasings are all the same.
+
+    Args:
+        graph: e-JSON graph, result of make_graph(...) 
+    '''
+
+    def get_phasing(netw: EJson, comp):
+        '''
+        Get the phasing of a line. Returns None if there is a transposition.
+        '''
+
+        cons = netw.connections_from(comp.cid)
+        phasings = [con[3]['phs'] for con in cons]
+        if phasings[0] == phasings[1]:
+            return phasings[0]
+        else:
+            return None
+
+    def cap_lines(netw, g_sub):
+        nodes = OrderedSet(x[0] for x in g_sub.nodes(data=True) if x[1]['comp'].ctype == 'Node')
+        lines = [x[0] for x in g_sub.nodes(data=True) if x[1]['comp'].ctype == 'Line']
+        adj_nodes = OrderedSet(e for x in lines for e in netw.graph.neighbors(x))
+        caps = sorted(adj_nodes - nodes)
+        assert len(caps) in (1, 2)
+        return (netw.graph.subgraph(lines + list(adj_nodes)), caps)
+
+    def do_str(netw, g_sub, remove, new):
+        g_sub, caps = cap_lines(netw, g_sub) # g_sub is unordered, caps are lexically ordered
+
+        if len(caps) <= 1:
+            # Special case: the string is circular.
+            to_remove = OrderedSet(g_sub.nodes) - caps
+            for x in to_remove:
+                remove.add(x)
+
+            return
+
+        # Order from one end to the other.
+        ordered = [g_sub.nodes[x]['comp'] for x in nx.dfs_preorder_nodes(g_sub, source=next(iter(caps)))]
+        do_str_ordered(netw, ordered, remove, new)
+
+    def do_str_ordered(netw, ordered, remove, new):
+        # ordered is [(id, type, dict)] for all nodes in the string including the two terminal nodes.
+        if len(ordered) < 5:
+            # We need at least 3 nodes and 2 lines to do any collapsing.
+            return
+
+        assert(ordered[0].ctype == 'Node')
+        assert(ordered[-1].ctype == 'Node')
+
+        # Loop over internal Nodes to check if all line to line connections are compatible.
+        # If not, do the pieces separately.
+        cons = list(netw.connections_between(ordered[0].cid, ordered[1].cid))
+        assert(len(cons) == 1)
+        con = (ordered[0].cid, ordered[-1].cid, cons[0][3])
+        for i_nd in range(2, len(ordered) - 1, 2):
+            l0 = ordered[i_nd - 1]
+            assert l0.ctype == 'Line'
+
+            l1 = ordered[i_nd + 1]
+            assert l1.ctype == 'Line'
+
+            ph0 = get_phasing(netw, l0)
+            ph1 = get_phasing(netw, l1)
+            if (ph0 is None or ph1 is None or ph0 != ph1):
+                # We need to do parts separately due to phasing mismatch at i_nd.
+                do_str_ordered(netw, ordered[:i_nd + 1], remove, new)
+                do_str_ordered(netw, ordered[i_nd:], remove, new)
+                return
+
+        repl_lines = ordered[1::2]
+
+        has_in_serv = any('in_service' in x.cdata for x in repl_lines)
+        in_serv = all(x.cdata['in_service'] if 'in_service' in x.cdata else True for x in repl_lines)
+
+        ls = np.array([x.cdata['length'] for x in repl_lines])
+        l_tot = sum(ls)
+        zs = np.array([complex(*x.cdata['z']) for x in repl_lines])
+        z0s = np.array([complex(*x.cdata['z0']) for x in repl_lines])
+        any_bs = any('b_chg' in x.cdata for x in repl_lines)
+        bs = np.array(
+            [complex(*x.cdata['b_chg']) if 'b_chg' in x.cdata else 0.0+0.0j for x in repl_lines]
+        ) if any_bs else None
+
+        new_line_id = repl_lines[0].cid
+        new_line_dict = copy.deepcopy(repl_lines[0].cdata)
+
+        new_line_dict['length'] = l_tot
+        new_line_dict['z'] = c2a(sum(zs * ls) / l_tot)
+        new_line_dict['z0'] = c2a(sum(z0s * ls) / l_tot)
+        if any_bs:
+            new_line_dict['b_chg'] = c2a(sum(bs * ls)) / l_tot
+
+        if has_in_serv:
+            new_line_dict['in_service'] = in_serv
+        
+        for x in ordered[2:-1]:
+            remove.add(x.cid) # Only need remove nodes, lines will be autoremoved along with them.
+        
+        new_line_dict['user_data']['orig_ids'] = list(
+            OrderedSet(sum([x.cdata['user_data']['orig_ids'] for x in repl_lines], []))
+        )
+        new.append((Component(new_line_id, 'Line', new_line_dict), con))
+
+    # Find all nodes that are only connected to either 1 or 2 lines.
+    nodes = (x.cid for x in netw.components(nodes_only=True))
+    nodes = (x for x in nodes if netw.graph.degree(x) in [1, 2])
+    nodes = [x for x in nodes if all(netw.component(y).ctype == 'Line' for y in netw.neighbors(x))]
+
+    # Extend to all connected lines. Note use of dict to preserve ordering (?)
+    lines = list(dict((l, None) for n in nodes for l in netw.graph.neighbors(n)).keys())
+
+    remove = OrderedSet()
+    new = []
+
+    graph_strs = netw.graph.subgraph(nodes + lines) # Not order preserving
+    con_comps = sorted((sorted(x) for x in nx.connected_components(graph_strs)), key=lambda x: x[0])
+    # Sorting is to preserve determinism.
+    for con_comp in con_comps:
+        graph_str = graph_strs.subgraph(con_comp)
+        do_str(netw, graph_str, remove, new)
+    
+    for x in remove:
+        netw.remove_component(x)
+
+    for c, con in new:
+        netw.add_comp(c.cid, c.ctype, c.cdata)
+        netw.connect(c.cid, con[0], 0, con[2])
+        netw.connect(c.cid, con[1], 1, con[2])
 
 
 def reduce_network(netw: EJson):
@@ -73,9 +328,6 @@ def reduce_network(netw: EJson):
     
     Args:
         netw: eJson network
-
-    Returns:
-        The mutated network.
     '''
 
     def report_stats(netw: EJson, prefix: str, log=logger.debug):
@@ -100,45 +352,22 @@ def reduce_network(netw: EJson):
     while True:
         n = len(netw.graph.nodes)
 
-        _merge_strings(netw)
+        merge_strings(netw)
         report_stats(netw, 'After merge strings')
 
-        netw.remove_hanging_nodes()
+        remove_hanging_nodes(netw)
         report_stats(netw, 'After remove hanging')
 
-        _merge_short_circuits(netw)
+        merge_short_circuits(netw)
         report_stats(netw, 'After merge short circuits')
         
-        _merge_dups(netw)
+        merge_dups(netw)
         report_stats(netw, 'After merge dups')
 
         if len(netw.graph.nodes) == n:
             break
 
     report_stats(netw, 'Final', logger.info)
-
-
-def remove_out_of_service(netw: EJson):
-    '''
-    Remove components that are out of service.
-
-    Args:
-        graph: e-JSON graph, result of make_graph(...) 
-
-    Returns:
-        The mutated graph
-    '''
-    
-    to_remove = set()
-
-    for comp in netw.components(): 
-        if not comp.is_in_service():
-            to_remove.add(comp.cid)
-
-    for comp_id in to_remove:
-        netw.remove_component(comp_id)
-
-    netw.remove_unconnected_nodes()
 
 
 def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool):
@@ -189,42 +418,13 @@ def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool)
             c.cdata['lat_long'] = (A @ np.array(c.cdata['xy']) + b).tolist()
 
 
-def add_standard_map(graph: nx.Graph):
+def make_radial(netw: EJson, start_id: str):
     '''
-    Assuming that all nodes have a latlong, add xy and a standard map using a standard map transform.
-
-    Args: 
-        graph: e-JSON graph, result of make_graph(...) 
-    '''
-
-    nds = list(d for _, _, d in graph_components(graph, comp_type='Node'))
-    if len(nds) == 0:
-        logger.warning(f"WARNING: Can't add map for network with no nodes")
-        return graph
-
-    lats, longs = zip(*(x['lat_long'] for x in nds))
-    lat_mean = np.mean(lats)
-    long_mean = np.mean(longs)
-
-    # Calculate the transform A, b s.t. latlong = A xy + b, xy = A_inv (latlong - b)
-    A, A_inv, b = _std_map_transform(lat_mean, long_mean)
-
-    for nd in nds:
-        nd['xy'] = A_inv.dot(np.array(nd['lat_long']) - b).tolist() 
-
-    return graph
-
-
-def break_cycles(netw: EJson, start_id: str):
-    '''
-    Break graph cycles, making the graph radial.
+    Break cycles, making the graph radial.
 
     Args:
-        graph: e-JSON graph, result of make_graph(...) 
+        netw: EJson network
         start_id: Depth first search starting component.
-
-    Returns:
-        The mutated graph
     '''
     
     # The code assumes everything is correctly ordered. Do it in case it hasn't already been done.
@@ -235,7 +435,7 @@ def break_cycles(netw: EJson, start_id: str):
             return (True, accum)
 
         if cur.ctype == 'Line':
-            nd1 = cur.cdata['cons'][1]['node'] # We're already ordered so this is the "to" node.
+            nd1 = list(netw.connections_from(cur.cid))[1][1]
             if nd1 in accum[0]:
                 accum[1].append(cur.cid)
                 return (True, accum)
@@ -245,7 +445,7 @@ def break_cycles(netw: EJson, start_id: str):
 
         return (False, accum)
 
-    def post_cb(graph: nx.Graph, cur, accum):
+    def post_cb(netw: EJson, cur: Component, accum: list):
         if cur.ctype == 'Node':
             accum[0].pop()
 
@@ -253,10 +453,10 @@ def break_cycles(netw: EJson, start_id: str):
 
     accum = ([], []) # (stack_of_seen_nodes, to_remove)
 
-    _, accum = netw.dfs(start_id, pre_cb=pre_cb, post_cb=post_cb, accum=accum)
-    to_remove = accum[1]
-    for comp_id in to_remove:
-        _remove_node(graph, comp_id)
+    _, (_, to_remove) = netw.dfs(start_id, pre_cb=pre_cb, post_cb=post_cb, accum=accum)
+
+    for cid in to_remove:
+        netw.remove_component(cid)
 
 
 def make_single_phased(netw: EJson):
@@ -284,11 +484,13 @@ def make_single_phased(netw: EJson):
     infs = [x for x in elems if x.ctype == 'Infeeder']
     loads = [x for x in elems if x.ctype == 'Load']
 
-    v_mult = s3 if netw['voltage_type'] == 'lg' else 1.0
-    netw['voltage_type'] = 'lg'
+    v_mult = s3 if netw.properties['voltage_type'] == 'lg' else 1.0
+    netw.properties['voltage_type'] = 'lg'
 
     for line in lines:
-        nph = len([x for x in line.cdata['cons'][0]['phs'] if x.lower() not in 'ng'])
+        cons = list(netw.connections_from(line.cid))
+        assert len(cons) == 2
+        nph = len([x for x in cons[0][3]['phs'] if x.lower() not in 'ng'])
         line.cdata['z'] = [x * 3 / nph for x in line.cdata['z']]
         line.cdata['z0'] = line.cdata['z']
         try:
@@ -296,9 +498,9 @@ def make_single_phased(netw: EJson):
         except KeyError:
             pass
 
-    for elem in elems:
-        for con in elem.cdata['cons']:
-            con['phs'] = ['A']
+    for _, _, _, con in netw.connections():
+        assert 'phs' in con
+        con['phs'] = ['A']
 
     for node in nodes:
         node.cdata['phs'] = ['A']
@@ -311,7 +513,7 @@ def make_single_phased(netw: EJson):
         is_delta = load.cdata['wiring'] == 'delta'
 
         load.cdata['wiring'] = 'wye' # i.e. in this case, equivalent of a single line to ground.
-        load.cdata['s_nom'] = [c2a(sum((a2c(x) for x in l.cdata['s_nom'])))]
+        load.cdata['s_nom'] = [c2a(sum((a2c(x) for x in load.cdata['s_nom'])))]
 
     for tx in txs:
         vg = tx.cdata['vector_group']
@@ -338,7 +540,7 @@ def scale_loads(netw: EJson, factor: complex) -> nx.Graph:
     Scale network loads by a complex factor.
     
     Args:
-        graph: e-JSON graph, result of make_graph(...) 
+        netw: e-JSON object
         factor: scaling factor
     '''
 
@@ -346,7 +548,7 @@ def scale_loads(netw: EJson, factor: complex) -> nx.Graph:
         load.cdata['s_nom'] = [c2a(factor * a2c(x)) for x in load.cdata['s_nom']]
 
 
-def set_balanced_loads(graph: nx.Graph, tot_load: complex) -> nx.Graph:
+def set_balanced_loads(netw: EJson, tot_load: complex) -> nx.Graph:
     '''
     Set all loads to a balanced constant load.
 
@@ -359,10 +561,8 @@ def set_balanced_loads(graph: nx.Graph, tot_load: complex) -> nx.Graph:
         n = len(load.cdata['s_nom'])
         load.cdata['s_nom'] = [c2a(tot_load / n)] * n
 
-    return graph
 
-
-def audit(graph: nx.Graph) -> dict:
+def audit(netw: EJson) -> dict:
     '''
     Audit e-JSON.
 
@@ -376,253 +576,28 @@ def audit(graph: nx.Graph) -> dict:
     aud = {}
 
     # Audit based on the schema.
-    _audit_schema(graph, aud)
+    _audit_schema(netw, aud)
     
     # Audit unit consistency.
-    _audit_unit_consistency(graph, aud)
+    _audit_unit_consistency(netw, aud)
 
-    # Check for unreferenced connections.
-    _audit_unreferenced_connections(graph, aud)
+    # Check for unconnected or ill-connected components.
+    _audit_connections(netw, aud)
 
     # Check for circular connections.
-    _audit_circular_cons(graph, aud)
+    _audit_circular_cons(netw, aud)
+    
+    # Check for connection phasing.
+    _audit_conn_phase_consistency(netw, aud)
 
     return aud
 
 
-# Internal utility functions ---------------------------------------------------
-
-
-def _merge_strings(netw: EJson):
-    '''
-    Merge strings of lines where possible. 
-    
-    A string is a (line, node, ... , node, line) sequence whose nodes do not connect to any other elements in the
-    sequence, and whose connection phasings are all the same.
-
-    Args:
-        graph: e-JSON graph, result of make_graph(...) 
-    
-    Returns:
-        the mutated graph.
-    '''
-
-    def get_phasing(comp_dict):
-        '''
-        Get the phasing of a line. Returns None if there is a transposition.
-        '''
-        phasings = [con['phs'] for con in comp_dict['cons']]
-        if phasings[0] == phasings[1]:
-            return phasings[0]
-        else:
-            return None
-
-    def cap_lines(g_sub, g):
-        nodes = set(x[0] for x in g_sub.nodes(data=True) if x[1]['comp'].ctype == 'Node')
-        lines = [x[0] for x in g_sub.nodes(data=True) if x[1]['comp'].ctype[0] == 'Line']
-        adj_nodes = set(e for x in lines for e in g.neighbors(x))
-        caps = adj_nodes - nodes
-        return (g.subgraph(lines + list(adj_nodes)), caps)
-
-    def do_str(g_sub, g, remove, new):
-        g_sub, caps = cap_lines(g_sub, g)
-
-        if len(caps) <= 1:
-            # Special case: the string is circular.
-            to_remove = set(g_sub.nodes) - caps
-            for x in to_remove:
-                remove.add(x)
-
-            return
-
-        if len(g_sub.nodes) < 5:
-            # We need at least 3 nodes and 2 lines to do any collapsing.
-            return
-
-        # Order from one end to the other.
-        assert len(caps) == 2
-
-        ordered = [g_sub.nodes[x]['comp'] for x in nx.dfs_preorder_nodes(g_sub, source=next(iter(caps)))]
-
-        do_str_ordered(ordered, remove, new)
-
-    def do_str_ordered(ordered, remove, new):
-        # ordered is [(id, type, dict)] for all nodes in the string including the two terminal nodes.
-
-        assert(ordered[0][1] == 'Node')
-        assert(ordered[-1][1] == 'Node')
-
-        # Loop over internal Nodes to check if all line to line connections are compatible.
-        # If not, do the pieces separately.
-        for i_nd in range(2, len(ordered) - 1, 2):
-            l0_id, l0_tp, l0 = ordered[i_nd - 1]
-            assert l0_tp == 'Line'
-
-            l1_id, l1_tp, l1 = ordered[i_nd + 1]
-            assert l1_tp == 'Line'
-
-            ph0 = get_phasing(l0)
-            ph1 = get_phasing(l1)
-            if (ph0 is None or ph1 is None or ph0 != ph1):
-                # We need to do parts separately due to phasing mismatch at i_nd.
-                do_str_ordered(ordered[:i_nd + 1], remove, new)
-                do_str_ordered(ordered[i_nd:], remove, new)
-                return
-
-        repl_lines = ordered[1::2]
-
-        has_in_serv = any('in_service' in x[2] for x in repl_lines)
-        in_serv = all(x[2]['in_service'] if 'in_service' in x[2] else True for x in repl_lines)
-
-        ls = np.array([x[2]['length'] for x in repl_lines])
-        l_tot = sum(ls)
-        zs = np.array([complex(*x[2]['z']) for x in repl_lines])
-        z0s = np.array([complex(*x[2]['z0']) for x in repl_lines])
-        any_bs = any('b_chg' in x[2] for x in repl_lines)
-        bs = np.array([complex(*x[2]['b_chg']) if 'b_chg' in x[2] else 0.0+0.0j for x in repl_lines]) if any_bs else None
-
-        new_line_id = repl_lines[0][0]
-        new_line_dict = copy.deepcopy(repl_lines[0][2])
-
-        new_line_dict['length'] = l_tot
-        new_line_dict['z'] = c2a(sum(zs * ls) / l_tot)
-        new_line_dict['z0'] = c2a(sum(z0s * ls) / l_tot)
-        if any_bs:
-            new_line_dict['b_chg'] = c2a(sum(bs * ls)) / l_tot
-
-        new_line_dict['cons'][0]['node'] = ordered[0][0]
-        new_line_dict['cons'][1]['node'] = ordered[-1][0]
-
-        if has_in_serv:
-            new_line_dict['in_service'] = in_serv
-        
-        for x in ordered[1:-1]:
-            remove.add(x[0])
-        
-        new_line_dict['user_data']['orig_ids'] = list(set(sum([x[2]['user_data']['orig_ids'] for x in repl_lines], [])))
-        new.append(Component(new_line_id, 'Line', new_line_dict))
-
-    graph = netw.graph
-
-    # Find all nodes that are only connected to either 1 or 2 lines.
-    nodes = (x.cid for x in netw.components(nodes_only=True))
-    nodes = (x for x in nodes if graph.degree(x) in [1, 2])
-    nodes = [x for x in nodes if all(netw.component(y).ctype == 'Line' for y in netw.neighbors(x))]
-
-    # Extend to all connected lines. Note use of dict to preserve ordering (?)
-    lines = list(dict((l, None) for n in nodes for l in graph.neighbors(n)).keys())
-
-    graph_strs = graph.subgraph(nodes + lines)
-
-    remove = set()
-    new = []
-
-    con_comps = sorted((sorted(x) for x in nx.connected_components(graph_strs)), key=lambda x: x[0])
-    # Sorting is to preserve determinism.
-    for con_comp in con_comps:
-        graph_str = graph_strs.subgraph(con_comp)
-        do_str(graph_str, graph, remove, new)
-
-    for x in remove:
-        netw.remove_component(x)
-
-    for c in new:
-        netw.add_comp(c.cid, c.ctype, c.cdata)
-        cons = c.cdata['cons']
-        for con in cons:
-            netw.connect(c.cid, con['node'], con)
-
-
-def _merge_short_circuits(netw: EJson) -> EJson:
-    '''
-    Merge short circuit lines where possible. 
-    
-    A short circuit line is a line that fully short circuits all phases between two nodes. In such cases, we can
-    simply remove the line and merge the two nodes.
-    '''
-
-    merges = [l.cid for l in netw.components('Line') if is_short_circuit(l, netw)]
-    
-    for cid in merges:
-        netw.collapse_elem(cid)
-
-    return netw
-
-
-def _merge_dups(netw: EJson) -> EJson:
-    '''
-    Merge duplicated lines.
-    '''
-
-    all_lines = list(netw.components('Line'))
-    all_nodes = list(netw.components(nodes_only=True))
-
-    dups = {}
-    for comp in all_lines:
-        cons = netw.connections_from(comp.cid)
-        cons_sorted = sorted(cons, key=lambda con: f'{con[1]}:{con[2]}')
-        con_nids = [x[1] for x in cons_sorted]
-        con_phs = [','.join(x[3]['phs']) for x in cons_sorted]
-        in_serv = comp.is_in_service()
-        k = '|'.join([','.join(x) for x in zip(con_nids, con_phs)] + [str(in_serv)])
-        dups.setdefault(k, []).append(comp)
-
-    dups = [v for k, v in dups.items() if len(v) > 1]
-    
-    def ys(l):
-        z = a2c(l['z'])
-        z0 = a2c(l['z0'])
-        if z0 == 0.0 and z != 0.0:
-            # KLUDGE: To avoid NaN in this situation, we can assume z0 = z.
-            z0 = z
-
-        return 1.0 / (l['length'] * np.array([z, z0]))
-
-    for dup in dups:
-        # We know that all lines in dup have the same nodes, the same in_service status and the same phasing.
-        min_length = min([x[1]['length'] for x in dup])
-        l0 = dup[0]
-        drop = []
-        ys_merged = ys(l0[1])
-        for l in dup[1:]:
-            ys_merged += ys(l[1])
-            drop.append(l[0])
-
-        for x in drop:
-            _remove_node (graph, x)
-
-        zs_merged = (1.0 / ys_merged) / min_length
-
-        l0[1]['z'] = [zs_merged[0].real, zs_merged[0].imag]
-        l0[1]['z0'] = [zs_merged[1].real, zs_merged[1].imag]
-        l0[1]['length'] = min_length
-
-    return netw
-
-
-def _std_map_transform(lat0, long0):
-    '''
-    latlong = A xy + b
-    xy = A_inv (latlong - b)
-    '''
-
-    R_EARTH_M = 6378100.
-
-    scale = R_EARTH_M * math.pi / 180.0
-    cos_lat_0 = math.cos(lat0 * math.pi / 180.0)
-
-    A_inv = np.array([[0.0, scale * cos_lat_0], [scale, 0.0]])
-    A = la.inv(A_inv)
-    b = np.array([lat0, long0])
-
-    return (A, A_inv, b)
-
-
-def _audit_schema(graph: nx.Graph, aud: dict):
+def _audit_schema(netw: EJson, aud: dict):
     probs = aud.setdefault(
         'schema_errors', {'description': 'List of JSON schema errors'}
     ).setdefault('problems', [])
-    netw_ej = graph.graph['netw']
+    netw_ej = netw.raw_ejson()
     val = jsonschema.validators.Draft202012Validator(get_schema())
     errs = sorted(val.iter_errors(netw_ej), key=lambda e: e.path)
     for e in errs:
@@ -637,13 +612,12 @@ def _audit_schema(graph: nx.Graph, aud: dict):
         })
 
 
-def _audit_unit_consistency(graph: nx.Graph, aud: dict):
+def _audit_unit_consistency(netw: EJson, aud: dict):
     probs = aud.setdefault(
         'unit_consistency', {'description': 'Check consistency of units'}
     ).setdefault('problems', [])
-    netw_ej = graph.graph['netw']
     try:
-        units = netw_ej['units']
+        units = netw.properties['units']
         i_unit = units['current']
         v_unit = units['voltage']
         z_unit = units['impedance']
@@ -678,72 +652,66 @@ def _audit_unit_consistency(graph: nx.Graph, aud: dict):
         })
 
 
-def _audit_unreferenced_connections(graph: nx.Graph, aud: dict):
+def _audit_connections(netw: EJson, aud: dict):
     probs = aud.setdefault(
-        'unreferenced_conections', {'description': 'Check for connections to nodes that don\'t exist'}
+        'conections', {'description': 'Check for wrongly connected components'}
     ).setdefault('problems', [])
-    nds = set(x[0] for x in graph_components(graph, comp_type='Node'))
-    for cid, ctype, cdict in (x for x in graph_components(graph) if x[1] != 'Node'):
-        try:
-            for i, con in enumerate(cdict['cons']):
-                if con['node'] not in nds:
-                    probs.append({
-                        'type': 'error',
-                        'fixed': False,
-                        'details': {
-                            'elem_id': cid,
-                            'con_idx': i,
-                            'con_node': con['node']
-                        }
-                    })
 
-        except KeyError:
-            # This error would have been picked up earlier. Don't let it cause trouble here.
-            pass
-
-    
-def _audit_circular_cons(graph: nx.Graph, aud: dict):
-    probs = aud.setdefault(
-        'circular_conections', {'description': 'Check for circular connections'}
-    ).setdefault('problems', [])
-    for eid, _, edict in (x for x in graph_components(graph) if x[1] != 'Node'):
-        cons = edict['cons']
-        if len(cons) == 2 and cons[0]['node'] == cons[1]['node']:
+    for comp in netw.components(elems_only=True):
+        ncons = len(list(netw.connections_from(comp.cid)))
+        if (
+            (comp.ctype in ('Line', 'Transformer') and ncons != 2) or
+            (comp.ctype in ('Infeeder', 'Load') and ncons != 1)
+        ):
             probs.append({
                 'type': 'error',
                 'fixed': False,
                 'details': {
-                    'elem_id': eid
+                    'elem_id': comp,
+                    'n_cons': ncons
                 }
             })
 
+    
+def _audit_circular_cons(netw: EJson, aud: dict):
+    probs = aud.setdefault(
+        'circular_conections', {'description': 'Check for circular connections'}
+    ).setdefault('problems', [])
 
-def _audit_conn_phase_consistency(graph: nx.Graph, aud: dict):
+    for comp in netw.components(elems_only=True):
+        for cons in netw.connections_from(comp.cid):
+            if len(cons) == 2 and cons[0][1] == cons[1][1]:
+                probs.append({
+                    'type': 'error',
+                    'fixed': False,
+                    'details': {
+                        'elem_id': eid
+                    }
+                })
+
+
+def _audit_conn_phase_consistency(netw: EJson, aud: dict):
     probs = aud.setdefault(
         'phase_consistency', {'description': 'Check that phases of connection exist in the node'}
     ).setdefault('problems', [])
-    for eid, _, edict in (x for x in graph_components(graph) if x[1] != 'Node'):
-        try:
-            for i, con in enumerate(edict['cons']):
-                nid = con['node']
-                _, ndict = graph.nodes[nid]['data']
-                cphs = set(con['phs'])
-                nphs = set(ndict['phs'])
-                if not cphs <= nphs:
-                    probs.append({
-                        'type': 'error',
-                        'fixed': False,
-                        'details': {
-                            'elem_id': eid,
-                            'con_idx': i,
-                            'con_node': nid,
-                            'con_phs': cphs,
-                            'node_phs': nphs
-                        }
-                    })
 
+    for con in netw.connections():
+        try:
+            nd_comp = netw.component(con[1])
+            con_phs = con[3]['phs']
+            nd_phs = nd_comp.cdata['phs']
+            if not (set(con_phs) <= set(nd_phs)):
+                probs.append({
+                    'type': 'error',
+                    'fixed': False,
+                    'details': {
+                        'elem_id': con[0],
+                        'node_id': con[1],
+                        'con_idx': con[2],
+                        'con_phs': con_phs,
+                        'node_phs': nd_phs
+                    }
+                })
         except KeyError:
             # This error would have been picked up earlier. Don't let it cause trouble here.
             pass
-
-

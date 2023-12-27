@@ -24,7 +24,8 @@ sys.setrecursionlimit(100000)
 
 
 def get_schema() -> dict:
-    with importlib.resources.open_text('ejson', 'e-json-schema.json') as f:
+    path = importlib.resources.files('ejson') / 'e-json-schema.json'
+    with path.open() as f:
         schema = json.load(f)
 
     return schema
@@ -38,7 +39,7 @@ class Component:
 
 
     def is_in_service(self):
-        self.cdata.get('in_service', True) 
+        return self.cdata.get('in_service', True) 
 
 
     def is_node(self):
@@ -77,10 +78,10 @@ class EJson:
                 self.add_comp(cid, ctype, cdata)
 
             for k, v in cons.items():
-                for con in v:
+                for i, con in enumerate(v):
                     try:
                         node_id = con['node']
-                        self.connect(k, node_id, con['phs'])
+                        self.connect(k, node_id, i, {k: v for k, v in con.items() if k != 'node'})
                     except KeyError as e:
                         logger.error(f'Connection to non-existent node {node_id} for component {cid} ' \
                                      f'with cons {cdata["cons"]}')
@@ -97,8 +98,8 @@ class EJson:
         return self
 
 
-    def connect(self, elem_id: str, node_id: str, phs: list):
-        _graph_add_edge(self.graph, elem_id, node_id, phs)
+    def connect(self, elem_id: str, node_id: str, con_idx: int, con: dict):
+        _graph_add_edge(self.graph, elem_id, node_id, con_idx, con)
         
         return self
     
@@ -205,36 +206,27 @@ class EJson:
    
 
     def reconnect_elem(self, cid, node_remap: dict):
-        cons = self.connections_from(cid)
+        cons = list(list(x) for x in self.connections_from(cid))
         
-        to_remove = [(con[0], con[1], con[2]) for con in cons]
-
         for con in cons:
+            self.graph.remove_edge(con[0], con[1], con[2])
+
             for k, v in node_remap.items():
                 if con[1] == k:
                     con[1] = v
 
-            self.graph.remove_edge(*to_remove)
-
         for con in cons:
-            self.connect(con[0], con[1], con[3])
+            self.connect(*con)
         
         return self
 
 
     def remove_component(self, cid: str):
         '''
-        Remove a component. If a node, also remove connected elements.
+        Remove a component.
         '''
 
-        to_remove = [cid]
-        c = self.component(cid)
-        if c.is_node():
-            to_remove.extend(self.neighbors(cid))
-
-        for rem_comp in to_remove:
-            self.graph.remove_node(rem_comp)
-
+        self.graph.remove_node(cid)
         return self
 
 
@@ -244,51 +236,11 @@ class EJson:
         '''
         to_remove = []
         for c in self.components(nodes_only=True):
-            if len(self.connections_from(c.cid)) == 0:
+            if len(list(self.connections_from(c.cid))) == 0:
                 to_remove.append(c.cid)
 
         for cid in to_remove:
             self.remove_component(cid)
-        
-        return self
-
-
-    def remove_hanging_nodes(self):
-        '''
-        Remove hanging nodes: a node that terminates a line and has no other attached components.
-        '''
-        to_remove = []
-        for comp in self.components('Node'):
-            adj = list(self.connections_from(comp.cid))
-            if len(adj) == 1:
-                comp_to = self.component(adj[0][1])
-                if comp_to.ctype == 'Line':
-                    to_remove.append(comp.cid)
-
-        for cid in to_remove:
-            self.remove_component(cid)
-        
-        return self
-
-
-    def collapse_elem(self, cid):
-        '''
-        Remove component cid (normally a line) and coalesce the second and
-        subsequent connected nodes into the first connected node.
-        '''
-
-        cons = list(self.connections_from(cid))
-        nodes = [x[1] for x in cons]
-        self.remove_component(cid)
-        for node in nodes[1:]:
-            for con in self.connections_from[node]:
-                self.reconnect_elem(con[1], {node: nodes[0]})
-
-        for node in nodes[1:]:
-            assert len(list(self.connections_from(node))) == 0
-            self.remove_component(node)
-
-        return self
 
 
     def dfs(
@@ -320,18 +272,18 @@ class EJson:
             (visited, accum): set of visited nodes and accumulated value
         '''
 
-        if type(start) is str:
-            start = self.component(start)
+        if type(start) is Component:
+            start = start.cid 
 
         if stop_cb is not None:
             # Defines pre_callback with return value in format (bool, None)
             assert(pre_cb is None and accum_cb is None)
-            pre_cb = lambda graph, curr_comp, accum: (stop_cb(graph, curr_comp), None)
+            pre_cb = lambda netw, curr_comp, accum: (stop_cb(netw, curr_comp), None)
 
         if accum_cb is not None:
             # Defines pre_callback with return value in format (False, int)
             assert(pre_cb is None and stop_cb is None)
-            pre_cb = lambda graph, curr_comp, accum: (False, accum_cb(graph, curr_comp, accum))
+            pre_cb = lambda netw, curr_comp, accum: (False, accum_cb(netw, curr_comp, accum))
 
         visited = OrderedSet()
 
@@ -340,7 +292,7 @@ class EJson:
 
     def _dfs(
         self,
-        curr_comp: Component,
+        curr_comp: str,
         pre_cb: Callable | None,
         post_cb: Callable | None,
         visited: OrderedSet,
@@ -350,18 +302,19 @@ class EJson:
         if (curr_comp in visited):
             return visited, accum
 
+        curr_comp_comp = self.component(curr_comp)
+
         if pre_cb is not None:
-            stop, accum = pre_cb(self, curr_comp, accum)
+            stop, accum = pre_cb(self, curr_comp_comp, accum)
             if stop:
                 return visited, accum
 
         visited.add(curr_comp)
-
-        for adj_comp, con in self.connections_from(curr_comp.cid):
+        for _, adj_comp, _, con in self.connections_from(curr_comp):
             visited, accum = self._dfs(adj_comp, pre_cb=pre_cb, post_cb=post_cb, visited=visited, accum=accum)
 
         if post_cb is not None:
-            accum = post_cb(graph, curr_comp, accum)
+            accum = post_cb(self, curr_comp_comp, accum)
 
         return visited, accum
 
@@ -378,22 +331,22 @@ class EJson:
             Reordered network.
         '''
 
-        visited, _ = self.dfs(start_id)
-        ordering = dict(reversed(x) for x in enumerate(visited))
-
+        ordering = {n: i for i, n in enumerate(nx.dfs_preorder_nodes(self.graph, source=start_id))}
         new_graph = nx.MultiGraph()
-        new_graph.add_nodes_from = ((k, self.component(k)) for k in visited)
-        new_graph.add_edges_from(self.graph.edges(data=True))
+        new_graph.add_nodes_from((k, {'comp': self.component(k)}) for k in ordering.keys())
 
         # Re-order connections. Don't mess with transformer ordering as this would swap primary and secondary.
-        for c in new_graph.components():
-            if c.ctype != 'Transformer' and 'cons' in c.cdata:
-                cons = c.cdata['cons']
-                try:
-                    if len(cons) == 2 and ordering[cons[0]['node']] > ordering[cons[1]['node']]:
-                        c.cdata['cons'].reverse()
-                except KeyError:
-                    pass
+        for _, c in new_graph.nodes(data='comp'):
+            if c.ctype != 'Node':
+                cons = list(self.connections_from(c.cid))
+
+                if c.ctype != 'Transformer':
+                    cons = sorted(cons, key=lambda x: ordering[x[1]])
+
+                for i, con in enumerate(cons):
+                    new_graph.add_edge(con[0], con[1], key=i, con=con[3])
+
+        self.graph = new_graph
         
         return self
 
@@ -411,16 +364,16 @@ class EJson:
             The mutated graph
 
         '''
-        visited, _ = dfs(graph, start_id, stop_cb=stop_cb)
+        visited, _ = self.dfs(start_id, stop_cb=stop_cb)
         for cid in visited:
-            remove_component(cid)
+            self.remove_component(cid)
 
-        remove_unconnected_nodes()
+        self.remove_unconnected_nodes()
 
         return self
 
 
-    def only(graph: nx.Graph, start_id: str, stop_cb: Callable = None) -> nx.Graph:
+    def only(self, start_id: str, stop_cb: Callable = None):
         '''
         Keep only selected components.
 
@@ -432,13 +385,9 @@ class EJson:
         Returns:
             The mutated graph
         '''
-        visited = dfs(graph, start_id, stop_cb=stop_cb)[0]
+        visited, _ = self.dfs(start_id, stop_cb=stop_cb)
 
-        remove = []
-        for cid, ctype, cdata in graph_components(graph, ctype='Node'):
-            if cid not in visited:
-                remove.append(cid)
-
+        remove = (c.cid for c in list(self.components()) if c.cid not in visited)
         for cid in remove:
             self.remove_component(cid)
 
@@ -463,8 +412,24 @@ class EJson:
             i_dict[prefix_a] += 1
             rename_dict[c.cid] = f'{prefix_a}_{i}'
 
-        self.graph = nx.relabel_nodes(self.graph, rename_dict)
+        return self.rename_to(rename_dict)
+    
+
+    def rename_to(self, rename_dict: dict):
+        '''
+        Rename according to a provided dict.
+
+        Args:
+            rename_dict: {old_name: new_name} mapping.
+
+        Returns:
+            New graph with renamed components.
+        '''
         
+        self.graph = nx.relabel_nodes(self.graph, rename_dict)
+        for cid, cdat in self.graph.nodes(data='comp'):
+            cdat.cid = cid
+
         return self
 
 
@@ -490,5 +455,5 @@ def _graph_add_node(graph: nx.MultiGraph, cid: str, ctype: str, cdata: dict):
     graph.add_node(cid, comp=Component(cid, ctype, cdata))
 
 
-def _graph_add_edge(graph: nx.MultiGraph, elem_id: str, node_id: str, phs: list):
-    graph.add_edge(elem_id, node_id, con={'phs': phs})
+def _graph_add_edge(graph: nx.MultiGraph, elem_id: str, node_id: str, con_idx: int, con: dict):
+    graph.add_edge(elem_id, node_id, key=con_idx, con=con)

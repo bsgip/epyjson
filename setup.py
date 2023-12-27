@@ -4,9 +4,10 @@ from setuptools import setup
 
 setup(
     name='epyjson',
+    description='Python library for processing e-JSON',
     version='0.0.1',
-    author='Dan Gordon, Anna Skobeleva',
-    author_email='dan.gordon@anu.edu.au, anna.skobeleva@anu.edu.au',
+    author='Dan Gordon',
+    author_email='dan.gordon@anu.edu.au',
     packages=['epyjson'],
     install_requires = [
         'jsonschema',

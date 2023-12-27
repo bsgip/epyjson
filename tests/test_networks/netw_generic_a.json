@@ -1,0 +1,42 @@
+{
+  "units": {
+    "current": 1000.0,
+    "impedance": 1,
+    "length": 1,
+    "power": 1000000.0,
+    "energy": 1000000.0,
+    "voltage": 1000.0
+  },
+  "voltage_type": "ll",
+  "components": {
+      "in1": {"Infeeder": {"cons": [{"node": "nd1", "phs": ["A", "B", "C"]}], "v_setpoint": 11.0}},
+      "nd1": {"Node": {"phs": ["A", "B", "C"], "v_base": 11.0}},
+      "tx1_2": {"Transformer": {"n_winding_pairs": 3, "cons": [{"node": "nd1", "phs": ["A", "B", "C"]}, {"node": "nd2", "phs": ["A", "B", "C"]}], "in_service": true, "vector_group": "yy0", "v_winding_base": [11.0, 0.3984], "nom_turns_ratio": [27.610, 0.0], "z": [[0, 0], [1e-6, 0.0]], "tap_side": "primary", "tap_range": [0, 0], "tap_factor": 0.025, "taps": [0, 0, 0], "is_grounded_p": true, "is_grounded_s": true}},
+      "nd2": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln2_3": {"Line": {"cons": [{"node": "nd2", "phs": ["A", "B", "C"]}, {"node": "nd3", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [1.0, 0.0], "z0": [1.0, 0.0], "in_service": true}},
+      "nd3": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln3_4": {"Line": {"cons": [{"node": "nd3", "phs": ["A", "B", "C"]}, {"node": "nd4", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd4": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln4_5": {"Line": {"cons": [{"node": "nd4", "phs": ["A", "C", "B"]}, {"node": "nd5", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd5": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln5_6": {"Line": {"cons": [{"node": "nd5", "phs": ["A", "B", "C"]}, {"node": "nd6", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd6": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln6_7": {"Line": {"cons": [{"node": "nd6", "phs": ["A", "B", "C"]}, {"node": "nd7", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd7": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln6_8": {"Line": {"cons": [{"node": "nd6", "phs": ["A", "B", "C"]}, {"node": "nd8", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd8": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ld8": {"Load": {"cons": [{"node": "nd8", "phs": ["A", "B", "C"]}], "in_service": true, "wiring": "wye", "s_nom": [[1.0, 0.0], [0.0, 2.0], [1.0, 1.0]]}},
+      "ln7_9": {"Line": {"cons": [{"node": "nd7", "phs": ["A", "B", "C"]}, {"node": "nd9", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd9": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ld9": {"Load": {"cons": [{"node": "nd9", "phs": ["A", "B", "C"]}], "in_service": true, "wiring": "wye", "s_nom": [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}},
+      "nd10": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln9_10": {"Line": {"cons": [{"node": "nd9", "phs": ["A", "B", "C"]}, {"node": "nd10", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd11": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln10_11": {"Line": {"cons": [{"node": "nd10", "phs": ["A", "B", "C"]}, {"node": "nd11", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd12": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln11_12": {"Line": {"cons": [{"node": "nd11", "phs": ["A", "B", "C"]}, {"node": "nd12", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd13": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ln10_13": {"Line": {"cons": [{"node": "nd10", "phs": ["A", "B", "C"]}, {"node": "nd13", "phs": ["A", "B", "C"]}], "length": 0.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "ld13": {"Load": {"cons": [{"node": "nd13", "phs": ["A", "B", "C"]}], "in_service": true, "wiring": "wye", "s_nom": [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}}
+    }
+}
