@@ -51,7 +51,7 @@ class Component:
 
 
     def user_data(self):
-        return cdata.setdefault('user_data', {}) 
+        return self.cdata.setdefault('user_data', {}) 
 
 
 class EJson:
