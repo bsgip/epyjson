@@ -12,9 +12,14 @@ The `EJson` class is based on the [`networkx`](https://networkx.org) package. Th
 On the other hand, the `utils` module provides additional non-core functionality, and is often more concerned with details of the data format. 
 
 ## Installation
-
 ```
 pip install .
+# or "pip install -e ." for development
+```
+
+## Unit tests
+```
+pytest -s -v
 ```
 
 ## Example
