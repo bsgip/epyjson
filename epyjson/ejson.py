@@ -8,7 +8,7 @@ import json
 import logging
 import math
 import sys
-from typing import Any, Callable, Generator, Sequence, List, Tuple
+from typing import Any, Callable, Generator, List, Optional, Sequence, Tuple, Union
 
 import jsonschema
 import networkx as nx
@@ -245,13 +245,13 @@ class EJson:
 
     def dfs(
         self,
-        start: Component | str,
-        pre_cb: Callable | None = None,
-        stop_cb: Callable | None = None,
-        accum_cb: Callable | None = None,
-        post_cb: Callable | None = None,
-        accum: Any | None = None
-    ) -> Tuple[List[Component], Any | None]:
+        start: Union[Component, str],
+        pre_cb: Optional[Callable] = None,
+        stop_cb: Optional[Callable] = None,
+        accum_cb: Optional[Callable] = None,
+        post_cb: Optional[Callable] = None,
+        accum: Any = None
+    ) -> Tuple[List[Component], Any]:
 
         '''
         Depth first search on the network graph. Starting from start, follow the graph, adding to visited for each
@@ -293,11 +293,11 @@ class EJson:
     def _dfs(
         self,
         curr_comp: str,
-        pre_cb: Callable | None,
-        post_cb: Callable | None,
+        pre_cb: Optional[Callable],
+        post_cb: Optional[Callable],
         visited: OrderedSet,
-        accum: Any | None
-    ) -> Tuple[List[str], Any | None]:
+        accum: Any
+    ) -> Tuple[List[str], Any]:
 
         if (curr_comp in visited):
             return visited, accum
