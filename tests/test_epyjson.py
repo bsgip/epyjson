@@ -1,7 +1,5 @@
 import pathlib
 
-import epyjson
-
 test_netws_path = pathlib.Path(__file__).parent / 'test_networks'
 
 def test_quick_tests():

@@ -24,7 +24,7 @@ sys.setrecursionlimit(100000)
 
 
 def get_schema() -> dict:
-    path = importlib.resources.files('ejson') / 'e-json-schema.json'
+    path = importlib.resources.files('epyjson') / 'e-json-schema.json'
     with path.open() as f:
         schema = json.load(f)
 
