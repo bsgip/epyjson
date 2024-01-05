@@ -1,9 +1,8 @@
 import pathlib
 
-from .ejson import *
-from .utils import *
+from epyjson import *
 
-test_netws_path = pathlib.Path(__file__).parents[1] / 'test_data'
+test_netws_path = pathlib.Path(__file__).parent / 'test_data'
 
 def test_quick_tests():
     ''' Test as much functionality as possible, mainly for crashes.'''
