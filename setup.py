@@ -9,6 +9,7 @@ setup(
     author='Dan Gordon',
     author_email='dan.gordon@anu.edu.au',
     packages=['epyjson'],
+    package_dir={'epyjson': 'src/epyjson'},
     install_requires = [
         'jsonschema',
         'numpy',
