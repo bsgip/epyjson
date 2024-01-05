@@ -1,12 +1,13 @@
 import pathlib
 
-import epyjson
+from .ejson import *
+from .utils import *
 
-test_netws_path = pathlib.Path(__file__).parent / 'test_networks'
+test_netws_path = pathlib.Path(__file__).parents[1] / 'test_data'
 
 def test_quick_tests():
     ''' Test as much functionality as possible, mainly for crashes.'''
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
 
     assert netw.component('nd1').cid == 'nd1'
 
@@ -23,23 +24,23 @@ def test_quick_tests():
 
     assert len(list(netw.neighbors('nd2'))) == 2
 
-    netw_trim: epyjson.EJson = netw.clone()
+    netw_trim: EJson = netw.clone()
     netw_trim.trim('ln10_11', stop_cb = lambda netw, c: c.cid == 'nd10')
     assert len(list(netw_trim.components())) == len(list(netw.components())) - 4
     
-    netw_trim: epyjson.EJson = netw.clone()
+    netw_trim: EJson = netw.clone()
     netw_trim.trim('nd4', stop_cb = lambda netw, c: c.cid == 'nd6')
     assert len(list(netw_trim.components())) == len(list(netw.components())) - 11
     
-    netw_only: epyjson.EJson = netw.clone()
+    netw_only: EJson = netw.clone()
     netw_only.only('nd5', stop_cb = lambda netw, c: c.cid == 'ln5_6')
     assert len(list(netw_only.components())) == 10
 
-    netw_recon: epyjson.EJson = netw.clone()
+    netw_recon: EJson = netw.clone()
     netw_recon.reconnect_elem('ld8', {'nd8': 'nd4'})
     assert next(iter(netw_recon.connections_from('ld8')))[1] == 'nd4'
     
-    netw_rename: epyjson.EJson = netw.clone()
+    netw_rename: EJson = netw.clone()
     netw_rename.rename()
     assert [c.cid for c in netw_rename.components()] == [
         'infeeder_1', 'node_1', 'transformer_1', 'node_2', 'line_1', 'node_3', 'line_2', 'node_4', 'line_3', 'node_5',
@@ -49,16 +50,16 @@ def test_quick_tests():
 
 
 def test_round_trip():
-    netw_a = epyjson.EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
+    netw_a = EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
     tmpfile = pathlib.Path('/tmp/netw_epyjson_test_round_trip.json')
     netw_a.write_to_file(tmpfile)
-    netw_b = epyjson.EJson.read_from_file('/tmp/netw_epyjson_test_round_trip.json')
+    netw_b = EJson.read_from_file('/tmp/netw_epyjson_test_round_trip.json')
     tmpfile.unlink()
     assert netw_a.raw_ejson() == netw_b.raw_ejson()
 
 
 def test_reorder():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_reorder.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_reorder.json')
     netw.reorder('ld3')
     assert [x.cid for x in netw.components()] == ['ld3', 'nd3', 'ln2_3', 'nd2', 'tx1_2', 'nd1', 'in1']
     tx_cons = [list(x[0:3]) for x in netw.connections_from('tx1_2')]
@@ -68,36 +69,36 @@ def test_reorder():
 
 
 def test_make_radial():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_make_radial.json')
-    epyjson.make_radial(netw, 'in1')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_make_radial.json')
+    make_radial(netw, 'in1')
     assert [x.cid for x in netw.components()] == ['in1', 'nd1', 'tx1_2', 'nd2', 'ln2_3', 'nd3', 'ln3_4', 'nd4']
 
 
 def test_remove_unconnected():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_remove_unconnected.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_remove_unconnected.json')
     netw.remove_unconnected_nodes()
     assert [x.cid for x in netw.components()] == ['in1', 'nd1']
 
 
 def test_remove_out_of_service():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_remove_out_of_service.json')
-    epyjson.remove_out_of_service(netw)
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_remove_out_of_service.json')
+    remove_out_of_service(netw)
     assert [x.cid for x in netw.components()] == ['in1', 'nd1']
 
 
 def test_set_loads():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
-    epyjson.set_balanced_loads(netw, 12.0 + 3.0j)
+    netw = EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
+    set_balanced_loads(netw, 12.0 + 3.0j)
     assert netw.component('ld8').cdata['s_nom'] == [[4.0, 1.0], [4.0, 1.0], [4.0, 1.0]]
-    epyjson.scale_loads(netw, 2.0)
+    scale_loads(netw, 2.0)
     assert netw.component('ld8').cdata['s_nom'] == [[8.0, 2.0], [8.0, 2.0], [8.0, 2.0]]
 
 
 def test_make_single_phased():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_make_single_phased.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_make_single_phased.json')
     netw_sp = netw.clone()
 
-    epyjson.make_single_phased(netw_sp)
+    make_single_phased(netw_sp)
     assert netw_sp.properties['voltage_type'] == 'lg'
     
     for con in netw_sp.connections():
@@ -127,13 +128,13 @@ def test_make_single_phased():
 
 def test_reduce_merge_strings():
     ''' Test reduce where there is a string of lines to merge.'''
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_reduce_merge_strings.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_reduce_merge_strings.json')
     
     def get_imp(netw, z):
         return sum((complex(*x.cdata[z]) * x.cdata['length']) for x in netw.components('Line'))
 
     z_bef = get_imp(netw, 'z')
-    epyjson.reduce_network(netw)
+    reduce_network(netw)
     z_aft = get_imp(netw, 'z')
 
     assert len(list(netw.components('Node'))) == 3
@@ -150,9 +151,9 @@ def test_reduce_remove_hanging():
     expected_before = set(('in1', 'nd1', 'nd2', 'nd3', 'nd4', 'tx1_2', 'ln2_3', 'ln2_4', 'ld3'))
     expected_after = set(('in1', 'nd1', 'nd2', 'nd3', 'tx1_2', 'ln2_3', 'ld3'))
 
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_reduce_remove_hanging.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_reduce_remove_hanging.json')
     assert set(x.cid for x in netw.components()) == expected_before
-    epyjson.reduce_network(netw)
+    reduce_network(netw)
     assert set(x.cid for x in netw.components()) == expected_after
 
 
@@ -161,15 +162,15 @@ def test_reduce_merge_shorts():
     expected_before = set(('in1', 'nd1', 'nd2', 'nd3', 'nd4', 'tx1_2', 'ln2_3', 'ln2_4', 'ld3', 'ld4'))
     expected_after = set(('in1', 'nd1', 'nd2', 'tx1_2', 'ld3', 'ld4'))
 
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_reduce_merge_shorts.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_reduce_merge_shorts.json')
     assert set(x.cid for x in netw.components()) == expected_before
-    epyjson.reduce_network(netw)
+    reduce_network(netw)
     assert set(x.cid for x in netw.components()) == expected_after
 
 
 def test_reduce_merge_dups():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_reduce_merge_dups.json')
-    epyjson.reduce_network(netw)
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_reduce_merge_dups.json')
+    reduce_network(netw)
     lines = list(netw.components('Line'))
     assert len(lines) == 1
     line = lines[0]
@@ -178,16 +179,16 @@ def test_reduce_merge_dups():
 
 
 def test_reduce():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_test_reduce.json')
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_reduce.json')
     assert len(list(netw.components('Line'))) == 11
-    epyjson.reduce_network(netw)
+    reduce_network(netw)
     line_ids = list(x.cid for x in netw.components('Line'))
     assert set(line_ids) == set(('ln2_3', 'ln4_5', 'ln5_6', 'ln6_8', 'ln6_7', 'ln9_10'))
     assert len(list(netw.components())) == 19
 
 
 def test_audit():
-    netw = epyjson.EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
-    aud = epyjson.audit(netw)
+    netw = EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
+    aud = audit(netw)
     for section in aud.values():
         assert len(section['problems']) == 0
