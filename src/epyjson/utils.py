@@ -287,8 +287,8 @@ def merge_strings(netw: EJson):
         if has_in_serv:
             new_line_dict['in_service'] = in_serv
         
-        for x in ordered[2:-1]:
-            remove.add(x.cid) # Only need remove nodes, lines will be autoremoved along with them.
+        for x in ordered[1:-1]:
+            remove.add(x.cid)
         
         new_line_dict['user_data']['orig_ids'] = list(
             OrderedSet(sum([x.cdata['user_data']['orig_ids'] for x in repl_lines], []))
