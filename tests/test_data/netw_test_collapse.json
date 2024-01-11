@@ -17,6 +17,8 @@
       "nd3": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
       "ln3_4": {"Line": {"cons": [{"node": "nd3", "phs": ["A", "B", "C"]}, {"node": "nd4", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
       "nd4": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
-      "ld4": {"Load": {"cons": [{"node": "nd4", "phs": ["A", "B", "C"]}], "in_service": true, "wiring": "wye", "s_nom": [[1.0, 0.0], [0.0, 2.0], [1.0, 1.0]]}}
+      "ln4_5": {"Line": {"cons": [{"node": "nd4", "phs": ["A", "B", "C"]}, {"node": "nd5", "phs": ["A", "B", "C"]}], "length": 1.0, "z": [2.0, 0.0], "z0": [2.0, 0.0], "in_service": true}},
+      "nd5": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}},
+      "ld5": {"Load": {"cons": [{"node": "nd5", "phs": ["A", "B", "C"]}], "in_service": true, "wiring": "wye", "s_nom": [[1.0, 0.0], [0.0, 2.0], [1.0, 1.0]]}}
     }
 }
