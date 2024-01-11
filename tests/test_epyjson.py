@@ -57,6 +57,13 @@ def test_round_trip():
     assert netw_a.raw_ejson() == netw_b.raw_ejson()
 
 
+def test_collapse():
+    netw = EJson.read_from_file(test_netws_path / 'netw_test_collapse.json')
+    collapse_elem(netw, 'ln3_4')
+    assert set((x.cid for x in netw.components())) == set(('in1', 'nd1', 'tx1_2', 'nd2', 'ln2_3', 'nd3', 'ld4'))
+    assert next(iter(netw.connections_from('ld4')))[1] == 'nd3'
+
+
 def test_reorder():
     netw = EJson.read_from_file(test_netws_path / 'netw_test_reorder.json')
     netw.reorder('ld3')
