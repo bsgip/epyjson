@@ -292,29 +292,29 @@ class EJson:
 
     def _dfs(
         self,
-        curr_comp: str,
+        curr_comp_id: str,
         pre_cb: Optional[Callable],
         post_cb: Optional[Callable],
         visited: OrderedSet,
         accum: Any
     ) -> Tuple[List[str], Any]:
 
-        if (curr_comp in visited):
+        if (curr_comp_id in visited):
             return visited, accum
 
-        curr_comp_comp = self.component(curr_comp)
+        curr_comp = self.component(curr_comp_id)
 
         if pre_cb is not None:
-            stop, accum = pre_cb(self, curr_comp_comp, accum)
+            stop, accum = pre_cb(self, curr_comp, accum)
             if stop:
                 return visited, accum
 
-        visited.add(curr_comp)
-        for _, adj_comp, _, con in self.connections_from(curr_comp):
+        visited.add(curr_comp_id)
+        for _, adj_comp, _, con in self.connections_from(curr_comp_id):
             visited, accum = self._dfs(adj_comp, pre_cb=pre_cb, post_cb=post_cb, visited=visited, accum=accum)
 
         if post_cb is not None:
-            accum = post_cb(self, curr_comp_comp, accum)
+            accum = post_cb(self, curr_comp, accum)
 
         return visited, accum
 
