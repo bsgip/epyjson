@@ -412,7 +412,7 @@ class EJson:
             i_dict[prefix_a] += 1
             rename_dict[c.cid] = f'{prefix_a}_{i}'
 
-        return self.rename_to(rename_dict)
+        return (self.rename_to(rename_dict), rename_dict)
     
 
     def rename_to(self, rename_dict: dict):
