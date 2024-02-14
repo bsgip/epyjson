@@ -1,6 +1,13 @@
+import copy
 from ordered_set import OrderedSet
+from typing import Sequence, List
 
-from .ejson import *
+import jsonschema
+import math
+import networkx as nx
+import numpy as np
+
+from .ejson import Component, get_schema, EJson, logger
 
 
 def a2c(a: Sequence[float]) -> complex:
@@ -9,7 +16,7 @@ def a2c(a: Sequence[float]) -> complex:
 
     Args:
         a: Array-like quantity containing [re, im] components.
-    
+
     Returns:
         Complex number
     '''
@@ -52,13 +59,13 @@ def remove_out_of_service(netw: EJson):
     Remove components that are out of service.
 
     Args:
-        graph: e-JSON graph, result of make_graph(...) 
+        graph: e-JSON graph, result of make_graph(...)
     '''
-    
+
     for comp in list(netw.components()):
         if not comp.is_in_service():
             netw.remove_component(comp.cid)
-    
+
     netw.remove_unconnected_nodes()
     assert [x.cid for x in netw.components()] == ['in1', 'nd1']
 
@@ -83,14 +90,14 @@ def collapse_elem(netw: EJson, cid):
 
 def merge_short_circuits(netw: EJson) -> EJson:
     '''
-    Merge short circuit lines where possible. 
-    
+    Merge short circuit lines where possible.
+
     A short circuit line is a line that fully short circuits all phases between two nodes. In such cases, we can
     simply remove the line and merge the two nodes.
     '''
 
     merges = [l.cid for l in netw.components('Line') if is_short_circuit(l, netw)]
-    
+
     for cid in merges:
         collapse_elem(netw, cid)
 
@@ -107,7 +114,7 @@ def is_zero_impedance(comp: Component) -> bool:
     Returns:
         boolean value that is true iff the line is zero length or has z == z0 == 0.
     '''
-    
+
     return comp.is_in_service() and (
         comp.cdata['length'] == 0.0
         or (all(value == 0.0 for value in comp.cdata['z']) and all(value == 0.0 for value in comp.cdata['z0']))
@@ -117,7 +124,7 @@ def is_zero_impedance(comp: Component) -> bool:
 def is_short_circuit(comp: Component, netw: EJson) -> bool:
     '''
     Returns True if a line short circuits ALL phases between its nodes.
-    
+
     Args:
         netw: eJson network
         comp: Component for a Line.
@@ -141,7 +148,6 @@ def merge_dups(netw: EJson) -> EJson:
     '''
 
     all_lines = list(netw.components('Line'))
-    all_nodes = list(netw.components(nodes_only=True))
 
     dups = {}
     for comp in all_lines:
@@ -154,7 +160,7 @@ def merge_dups(netw: EJson) -> EJson:
         dups.setdefault(k, []).append(comp)
 
     dups = [v for k, v in dups.items() if len(v) > 1]
-    
+
     def ys(l):
         z = a2c(l['z'])
         z0 = a2c(l['z0'])
@@ -188,13 +194,13 @@ def merge_dups(netw: EJson) -> EJson:
 
 def merge_strings(netw: EJson):
     '''
-    Merge strings of lines where possible. 
-    
+    Merge strings of lines where possible.
+
     A string is a (line, node, ... , node, line) sequence whose nodes do not connect to any other elements in the
     sequence, and whose connection phasings are all the same.
 
     Args:
-        graph: e-JSON graph, result of make_graph(...) 
+        graph: e-JSON graph, result of make_graph(...)
     '''
 
     def get_phasing(netw: EJson, comp):
@@ -218,7 +224,7 @@ def merge_strings(netw: EJson):
         return (netw.graph.subgraph(lines + list(adj_nodes)), caps)
 
     def do_str(netw, g_sub, remove, new):
-        g_sub, caps = cap_lines(netw, g_sub) # g_sub is unordered, caps are lexically ordered
+        g_sub, caps = cap_lines(netw, g_sub)  # g_sub is unordered, caps are lexically ordered
 
         if len(caps) <= 1:
             # Special case: the string is circular.
@@ -238,13 +244,13 @@ def merge_strings(netw: EJson):
             # We need at least 3 nodes and 2 lines to do any collapsing.
             return
 
-        assert(ordered[0].ctype == 'Node')
-        assert(ordered[-1].ctype == 'Node')
+        assert ordered[0].ctype == 'Node'
+        assert ordered[-1].ctype == 'Node'
 
         # Loop over internal Nodes to check if all line to line connections are compatible.
         # If not, do the pieces separately.
         cons = list(netw.connections_between(ordered[0].cid, ordered[1].cid))
-        assert(len(cons) == 1)
+        assert len(cons) == 1
         con = (ordered[0].cid, ordered[-1].cid, cons[0][3])
         for i_nd in range(2, len(ordered) - 1, 2):
             l0 = ordered[i_nd - 1]
@@ -286,10 +292,10 @@ def merge_strings(netw: EJson):
 
         if has_in_serv:
             new_line_dict['in_service'] = in_serv
-        
+
         for x in ordered[1:-1]:
             remove.add(x.cid)
-        
+
         new_line_dict['user_data']['orig_ids'] = list(
             OrderedSet(sum([x.cdata['user_data']['orig_ids'] for x in repl_lines], []))
         )
@@ -306,13 +312,13 @@ def merge_strings(netw: EJson):
     remove = OrderedSet()
     new = []
 
-    graph_strs = netw.graph.subgraph(nodes + lines) # Not order preserving
+    graph_strs = netw.graph.subgraph(nodes + lines)  # Not order preserving
     con_comps = sorted((sorted(x) for x in nx.connected_components(graph_strs)), key=lambda x: x[0])
     # Sorting is to preserve determinism.
     for con_comp in con_comps:
         graph_str = graph_strs.subgraph(con_comp)
         do_str(netw, graph_str, remove, new)
-    
+
     for x in remove:
         netw.remove_component(x)
 
@@ -325,7 +331,7 @@ def merge_strings(netw: EJson):
 def reduce_network(netw: EJson):
     '''
     Reduce the size of the network by telescoping lines together, merging duplicated lines and removing unused spurs.
-    
+
     Args:
         netw: eJson network
     '''
@@ -339,7 +345,7 @@ def reduce_network(netw: EJson):
         for c in netw.components():
             by_type.setdefault(c.ctype, 0)
             by_type[c.ctype] += 1
-        
+
         logger.debug(f'    {prefix}:')
         logger.debug(f'        Total line length = {l}')
         for t, n in by_type.items():
@@ -360,7 +366,7 @@ def reduce_network(netw: EJson):
 
         merge_short_circuits(netw)
         report_stats(netw, 'After merge short circuits')
-        
+
         merge_dups(netw)
         report_stats(netw, 'After merge dups')
 
@@ -403,12 +409,12 @@ def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool)
             ]
         )
         rhs = np.array([lat[0], lon[0], lat[1], lon[1], lat[2], lon[2]])
-        a00, a01, a10, a11, b0, b1 = la.solve(A, rhs)
+        a00, a01, a10, a11, b0, b1 = np.linalg.solve(A, rhs)
     else:
         exit('Map must have either 2 or three test points.')
 
     A = np.array([[a00, a01], [a10, a11]])
-    A_inv = la.inv(A)
+    A_inv = np.linalg.inv(A)
     b = np.array([b0, b1])
 
     for c in netw.components('Node'):
@@ -426,7 +432,7 @@ def make_radial(netw: EJson, start_id: str):
         netw: EJson network
         start_id: Depth first search starting component.
     '''
-    
+
     # The code assumes everything is correctly ordered. Do it in case it hasn't already been done.
     netw.reorder(start_id)
 
@@ -451,7 +457,7 @@ def make_radial(netw: EJson, start_id: str):
 
         return accum
 
-    accum = ([], []) # (stack_of_seen_nodes, to_remove)
+    accum = ([], [])  # (stack_of_seen_nodes, to_remove)
 
     _, (_, to_remove) = netw.dfs(start_id, pre_cb=pre_cb, post_cb=post_cb, accum=accum)
 
@@ -510,9 +516,7 @@ def make_single_phased(netw: EJson):
         inf.cdata['v_setpoint'] *= v_mult
 
     for load in loads:
-        is_delta = load.cdata['wiring'] == 'delta'
-
-        load.cdata['wiring'] = 'wye' # i.e. in this case, equivalent of a single line to ground.
+        load.cdata['wiring'] = 'wye'  # i.e. in this case, equivalent of a single line to ground.
         load.cdata['s_nom'] = [c2a(sum((a2c(x) for x in load.cdata['s_nom'])))]
 
     for tx in txs:
@@ -522,7 +526,7 @@ def make_single_phased(netw: EJson):
         tx.cdata['is_grounded_p'] = True
         tx.cdata['is_grounded_s'] = True
         dy = [x for x in vg if x in 'dy']
-        assert(len(dy) == 2)
+        assert len(dy) == 2
         mult = [math.sqrt(3.0) if x == 'y' else 1.0 for x in dy]
         tx.cdata['v_winding_base'] = [v_mult * x * y for x, y in zip(tx.cdata['v_winding_base'], mult)]
         if isinstance(tx.cdata['nom_turns_ratio'], list):
@@ -538,7 +542,7 @@ def make_single_phased(netw: EJson):
 def scale_loads(netw: EJson, factor: complex) -> nx.Graph:
     '''
     Scale network loads by a complex factor.
-    
+
     Args:
         netw: e-JSON object
         factor: scaling factor
@@ -567,7 +571,7 @@ def audit(netw: EJson) -> dict:
     Audit e-JSON.
 
     Args:
-        graph: e-JSON graph, result of make_graph(...) 
+        graph: e-JSON graph, result of make_graph(...)
 
     Returns:
         dict containing the results of the audit.
@@ -577,7 +581,7 @@ def audit(netw: EJson) -> dict:
 
     # Audit based on the schema.
     _audit_schema(netw, aud)
-    
+
     # Audit unit consistency.
     _audit_unit_consistency(netw, aud)
 
@@ -586,7 +590,7 @@ def audit(netw: EJson) -> dict:
 
     # Check for circular connections.
     _audit_circular_cons(netw, aud)
-    
+
     # Check for connection phasing.
     _audit_conn_phase_consistency(netw, aud)
 
@@ -672,7 +676,7 @@ def _audit_connections(netw: EJson, aud: dict):
                 }
             })
 
-    
+
 def _audit_circular_cons(netw: EJson, aud: dict):
     probs = aud.setdefault(
         'circular_conections', {'description': 'Check for circular connections'}
@@ -685,7 +689,7 @@ def _audit_circular_cons(netw: EJson, aud: dict):
                     'type': 'error',
                     'fixed': False,
                     'details': {
-                        'elem_id': eid
+                        'elem_id': comp.cid
                     }
                 })
 
