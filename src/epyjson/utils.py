@@ -601,7 +601,7 @@ def _audit_schema(netw: EJson, aud: dict):
     probs = aud.setdefault(
         'schema_errors', {'description': 'List of JSON schema errors'}
     ).setdefault('problems', [])
-    netw_ej = netw.raw_ejson()
+    netw_ej = netw.raw_ejson
     val = jsonschema.validators.Draft202012Validator(get_schema())
     errs = sorted(val.iter_errors(netw_ej), key=lambda e: e.path)
     for e in errs:

@@ -54,7 +54,7 @@ def test_round_trip():
     netw_a.write_to_file(tmpfile)
     netw_b = EJson.read_from_file('/tmp/netw_epyjson_test_round_trip.json')
     tmpfile.unlink()
-    assert netw_a.raw_ejson() == netw_b.raw_ejson()
+    assert netw_a.raw_ejson == netw_b.raw_ejson
 
 
 def test_collapse():

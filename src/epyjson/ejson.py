@@ -42,7 +42,11 @@ class Component:
     def is_elem(self):
         return not self.is_node()
 
+    @property
     def user_data(self):
+        '''
+        Access user_data key, setting to an empty dict if not present.
+        '''
         return self.cdata.setdefault('user_data', {})
 
 
@@ -79,7 +83,7 @@ class EJson:
                     raise e
 
     def __str__(self):
-        return json.dumps(self.raw_ejson(), indent=2)
+        return json.dumps(self.raw_ejson, indent=2)
 
     def add_comp(self, cid: str, ctype: str, cdata: dict):
         _graph_add_node(self.graph, cid, ctype, {k: v for k, v in cdata.items() if k != 'cons'})
@@ -101,14 +105,19 @@ class EJson:
 
     def write_to_file(self, path):
         with open(path, 'w+') as f:
-            json.dump(self.raw_ejson(), f, indent=True)
+            json.dump(self.raw_ejson, f, indent=True)
 
         return self
 
     def clone(self):
         return copy.deepcopy(self)
 
+    @property
     def raw_ejson(self):
+        '''
+        Access raw e-JSON dict.
+        '''
+
         # Re-add the connections data
         comps = {}
         for c in self.components():

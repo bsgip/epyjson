@@ -14,7 +14,7 @@ nx_nodes = list(netw.graph.subgraph(['nd1', 'nd2']))
 lines = list(netw.components(ctype='Line'))
 
 # Obtain raw e-JSON dict.
-raw = netw.raw_ejson()
+raw = netw.raw_ejson
 
 # Obtain connections from ln2_3 to connected nodes.
 line_cons = list(netw.connections_from('ln2_3'))
