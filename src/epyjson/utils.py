@@ -49,6 +49,7 @@ def remove_hanging_nodes(netw: EJson):
             comp_to = netw.component(adj[0][1])
             if comp_to.ctype == 'Line':
                 to_remove.append(comp.cid)
+                to_remove.append(comp_to.cid)
 
     for cid in to_remove:
         netw.remove_component(cid)
@@ -658,7 +659,7 @@ def _audit_unit_consistency(netw: EJson, aud: dict):
 
 def _audit_connections(netw: EJson, aud: dict):
     probs = aud.setdefault(
-        'conections', {'description': 'Check for wrongly connected components'}
+        'connections', {'description': 'Check for wrongly connected components'}
     ).setdefault('problems', [])
 
     for comp in netw.components(elems_only=True):
@@ -679,7 +680,7 @@ def _audit_connections(netw: EJson, aud: dict):
 
 def _audit_circular_cons(netw: EJson, aud: dict):
     probs = aud.setdefault(
-        'circular_conections', {'description': 'Check for circular connections'}
+        'circular_connections', {'description': 'Check for circular connections'}
     ).setdefault('problems', [])
 
     for comp in netw.components(elems_only=True):
