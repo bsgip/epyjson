@@ -302,9 +302,9 @@ def merge_strings(netw: EJson):
         )
         new.append((Component(new_line_id, 'Line', new_line_dict), con))
 
-    # Find all nodes that are only connected to either 1 or 2 lines.
+    # Find all nodes that are only connected to 2 lines.
     nodes = (x.cid for x in netw.components(nodes_only=True))
-    nodes = (x for x in nodes if netw.graph.degree(x) in [1, 2])
+    nodes = (x for x in nodes if netw.graph.degree(x) == 2)
     nodes = [x for x in nodes if all(netw.component(y).ctype == 'Line' for y in netw.neighbors(x))]
 
     # Extend to all connected lines. Note use of dict to preserve ordering (?)
@@ -347,10 +347,10 @@ def reduce_network(netw: EJson):
             by_type.setdefault(c.ctype, 0)
             by_type[c.ctype] += 1
 
-        logger.debug(f'    {prefix}:')
-        logger.debug(f'        Total line length = {l}')
+        log(f'    {prefix}:')
+        log(f'        Total line length = {l}')
         for t, n in by_type.items():
-            logger.debug(f'        Number of {t}s = {n}')
+            log(f'        Number of {t}s = {n}')
 
     for line in netw.components('Line'):
         line.cdata.setdefault('user_data', {})['orig_ids'] = [line.cid]
