@@ -105,7 +105,7 @@ class EJson:
 
     def write_to_file(self, path):
         with open(path, 'w+') as f:
-            json.dump(self.raw_ejson, f, indent=True)
+            json.dump(self.raw_ejson, f, indent=2)
 
         return self
 
