@@ -297,9 +297,17 @@ def merge_strings(netw: EJson):
         for x in ordered[1:-1]:
             remove.add(x.cid)
 
-        new_line_dict['user_data']['orig_ids'] = list(
-            OrderedSet(sum([x.cdata['user_data']['orig_ids'] for x in repl_lines], []))
-        )
+        def is_merged(ud):
+            return list(ud.keys()) == ['merged_user_data']
+
+        def ud_list(lid, ud):
+            return list(ud['merged_user_data'].items()) if is_merged(ud) else [(lid, ud)]
+
+        def merge_ud(lines):
+            return {'merged_user_data': dict(sum((ud_list(x.cid, x.user_data) for x in lines), []))}
+
+        new_line_dict['user_data'] = merge_ud(repl_lines)
+
         new.append((Component(new_line_id, 'Line', new_line_dict), con))
 
     # Find all nodes that are only connected to 2 lines.
