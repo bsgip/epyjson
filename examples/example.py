@@ -2,7 +2,7 @@ import epyjson
 
 # Load in the network
 netw = epyjson.EJson.read_from_file(
-    '../tests/test_networks/netw_generic_a.json'
+    '../tests/test_data/netw_generic_a.json'
 )
 
 # Directly obtain and manipulate the underlying networkx graph. Normally, we

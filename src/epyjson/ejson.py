@@ -12,6 +12,8 @@ from typing import Any, Callable, Generator, List, Optional, Tuple, Union
 import networkx as nx
 from ordered_set import OrderedSet
 
+from .dumper import dump_pretty, dumps_pretty
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,29 +27,6 @@ def get_schema() -> dict:
         schema = json.load(f)
 
     return schema
-
-
-@dataclass
-class Component:
-    cid: str
-    ctype: str
-    cdata: dict
-
-    def is_in_service(self):
-        return self.cdata.get('in_service', True)
-
-    def is_node(self):
-        return self.ctype == 'Node'
-
-    def is_elem(self):
-        return not self.is_node()
-
-    @property
-    def user_data(self):
-        '''
-        Access user_data key, setting to an empty dict if not present.
-        '''
-        return self.cdata.setdefault('user_data', {})
 
 
 class EJson:
@@ -66,11 +45,11 @@ class EJson:
         self.graph = nx.MultiGraph()
 
         cons = {}
-        for cid, ctype, cdata in _netw_components(ejson_dict):
-            if 'cons' in cdata:
-                cons[cid] = cdata['cons']
+        for c in _netw_components(ejson_dict):
+            if 'cons' in c:
+                cons[c['id']] = c['cons']
 
-            self.add_comp(cid, ctype, cdata)
+            self.add_comp(c)
 
         for k, v in cons.items():
             for i, con in enumerate(v):
@@ -78,15 +57,15 @@ class EJson:
                     node_id = con['node']
                     self.connect(k, node_id, i, {k: v for k, v in con.items() if k != 'node'})
                 except KeyError as e:
-                    logger.error(f'Connection to non-existent node {node_id} for component {cid} '
-                                 f'with cons {cdata["cons"]}')
+                    logger.error(f'Connection to non-existent node {node_id} for component {c["id"]} '
+                                 f'with cons {c["cons"]}')
                     raise e
 
     def __str__(self):
-        return json.dumps(self.raw_ejson, indent=2)
+        return dumps_pretty(self.raw_ejson)
 
-    def add_comp(self, cid: str, ctype: str, cdata: dict):
-        _graph_add_node(self.graph, cid, ctype, {k: v for k, v in cdata.items() if k != 'cons'})
+    def add_comp(self, comp: dict):
+        _graph_add_node(self.graph, {k: v for k, v in comp.items() if k != 'cons'})
 
         return self
 
@@ -105,7 +84,7 @@ class EJson:
 
     def write_to_file(self, path):
         with open(path, 'w+') as f:
-            json.dump(self.raw_ejson, f, indent=2)
+            dump_pretty(self.raw_ejson, f)
 
         return self
 
@@ -119,13 +98,10 @@ class EJson:
         '''
 
         # Re-add the connections data
-        comps = {}
-        for c in self.components():
-            if c.is_elem():
-                add_cons = {'cons': [{'node': x[1]} | x[3] for x in self.connections_from(c.cid)]}
-                comps[c.cid] = {c.ctype: c.cdata | add_cons}
-            else:
-                comps[c.cid] = {c.ctype: c.cdata}
+        comps = [copy.deepcopy(x) for x in self.components()]
+        for c in comps:
+            if c['type'] != 'Node':
+                c['cons'] = [{'node': x[1]} | x[3] for x in self.connections_from(c['id'])]
 
         return self.properties | {'components': comps}
 
@@ -137,25 +113,35 @@ class EJson:
             ctype: Optional filter(id_, type_, dict_) for components to be included
 
         Returns:
-            Generator over Component objects
+            Generator over component dicts
         '''
 
         retval = (v for k, v in self.graph.nodes(data='comp'))
         if ctype is not None:
-            retval = (x for x in retval if x.ctype == ctype)
+            retval = (x for x in retval if x['type'] == ctype)
 
         if nodes_only:
-            retval = (x for x in retval if x.ctype == 'Node')
+            retval = (x for x in retval if x['type'] == 'Node')
 
         if elems_only:
-            retval = (x for x in retval if x.ctype != 'Node')
+            retval = (x for x in retval if x['type'] != 'Node')
 
         return retval
 
-    def component(self, cid: str) -> Component:
+    def component(self, cid: str) -> dict:
         return self.graph.nodes[cid]['comp']
 
     def connections(self):
+        '''
+        Return all connections in the network
+
+        Returns:
+            ((component_1, component_2, terminal_idx, connection_data), ...)
+            where terminal_idx is the index in the element's 'cons' array,
+            e.g. for a line or transformer with two terminals, terminal_idx
+            could be either 0 or 1
+        '''
+
         return (x for x in self.graph.edges(keys=True, data='con'))
 
     def connections_from(self, cid: str):
@@ -166,7 +152,10 @@ class EJson:
             cid: The component we want to find connections from
 
         Returns:
-            ((connected_component, connection_data), ...)
+            ((cid, connected_component, terminal_idx, connection_data), ...)
+            where terminal_idx is the index in the element's 'cons' array,
+            e.g. for a line or transformer with two terminals, terminal_idx
+            could be either 0 or 1
         '''
 
         return (x for x in self.graph.edges(cid, keys=True, data='con'))
@@ -180,7 +169,10 @@ class EJson:
             cid_b: The second component we want to find connections between
 
         Returns:
-            (connection_data, ...)
+            ((cid_a, cid_b, terminal_idx, connection_data), ...)
+            where terminal_idx is the index in the element's 'cons' array,
+            e.g. for a line or transformer with two terminals, terminal_idx
+            could be either 0 or 1
         '''
 
         try:
@@ -220,21 +212,21 @@ class EJson:
         '''
         to_remove = []
         for c in self.components(nodes_only=True):
-            if len(list(self.connections_from(c.cid))) == 0:
-                to_remove.append(c.cid)
+            if len(list(self.connections_from(c['id']))) == 0:
+                to_remove.append(c['id'])
 
         for cid in to_remove:
             self.remove_component(cid)
 
     def dfs(
         self,
-        start: Union[Component, str],
+        start: Union[dict, str],
         pre_cb: Optional[Callable] = None,
         stop_cb: Optional[Callable] = None,
         accum_cb: Optional[Callable] = None,
         post_cb: Optional[Callable] = None,
         accum: Any = None
-    ) -> Tuple[List[Component], Any]:
+    ) -> Tuple[List[dict], Any]:
 
         '''
         Depth first search on the network graph. Starting from start, follow the graph, adding to visited for each
@@ -255,8 +247,8 @@ class EJson:
             (visited, accum): set of visited nodes and accumulated value
         '''
 
-        if type(start) is Component:
-            start = start.cid
+        if type(start) is dict:
+            start = start['id']
 
         if stop_cb is not None:
             # Defines pre_callback with return value in format (bool, None)
@@ -322,10 +314,10 @@ class EJson:
 
         # Re-order connections. Don't mess with transformer ordering as this would swap primary and secondary.
         for _, c in new_graph.nodes(data='comp'):
-            if c.ctype != 'Node':
-                cons = list(self.connections_from(c.cid))
+            if c['type'] != 'Node':
+                cons = list(self.connections_from(c['id']))
 
-                if c.ctype != 'Transformer':
+                if c['type'] != 'Transformer':
                     cons = sorted(cons, key=lambda x: ordering[x[1]])
 
                 for i, con in enumerate(cons):
@@ -370,7 +362,7 @@ class EJson:
         '''
         visited, _ = self.dfs(start_id, stop_cb=stop_cb)
 
-        remove = (c.cid for c in list(self.components()) if c.cid not in visited)
+        remove = (c['id'] for c in list(self.components()) if c['id'] not in visited)
         for cid in remove:
             self.remove_component(cid)
 
@@ -389,10 +381,10 @@ class EJson:
         i_dict = {}
         rename_dict = {}
         for c in self.components():
-            prefix_a = c.ctype.lower()
+            prefix_a = c['type'].lower()
             i = i_dict.setdefault(prefix_a, 1)
             i_dict[prefix_a] += 1
-            rename_dict[c.cid] = f'{prefix_a}_{i}'
+            rename_dict[c['id']] = f'{prefix_a}_{i}'
 
         return (self.rename_to(rename_dict), rename_dict)
 
@@ -409,31 +401,28 @@ class EJson:
 
         self.graph = nx.relabel_nodes(self.graph, rename_dict)
         for cid, cdat in self.graph.nodes(data='comp'):
-            cdat.cid = cid
+            cdat['id'] = cid
 
         return self
 
 
 def _netw_components(netw_ejson, ctype: str = None) -> Generator:
     '''
-    Generator to iterate through components in an e-JSON network as (cid, ctype, cdata).
+    Generator to iterate through components in an e-JSON network.
 
     Args:
         ctype: Optional filter on component type for components to be included
 
     Returns:
-        Generator with elements of the form (cid, ctype, cdata).
+        Generator with elements
     '''
 
-    retval = ((k, next(iter(v.keys())), next(iter(v.values()))) for k, v in netw_ejson['components'].items())
-    if ctype is not None:
-        retval = (x for x in retval if x[1] == ctype)
-
-    return retval
+    return (x for x in netw_ejson['components']) if ctype is None else \
+           (x for x in netw_ejson['components'] if x[1] == ctype)
 
 
-def _graph_add_node(graph: nx.MultiGraph, cid: str, ctype: str, cdata: dict):
-    graph.add_node(cid, comp=Component(cid, ctype, cdata))
+def _graph_add_node(graph: nx.MultiGraph, c: dict):
+    graph.add_node(c['id'], comp=c)
 
 
 def _graph_add_edge(graph: nx.MultiGraph, elem_id: str, node_id: str, con_idx: int, con: dict):

@@ -1,16 +1,26 @@
 {
-  "units": {
-    "current": 1000.0,
-    "impedance": 1,
-    "length": 1,
-    "power": 1000000.0,
-    "energy": 1000000.0,
-    "voltage": 1000.0
-  },
-  "voltage_type": "ll",
-  "components": {
-      "in1": {"Infeeder": {"cons": [{"node": "nd1", "phs": ["A", "B", "C"]}], "v_setpoint": 11.0}},
-      "nd1": {"Node": {"phs": ["A", "B", "C"], "v_base": 11.0}},
-      "nd4": {"Node": {"phs": ["A", "B", "C"], "v_base": 0.415}}
-    }
+    "voltage_type": "ll",
+    "components": [
+        {
+            "id": "in1",
+            "type": "Infeeder",
+            "cons": [{
+                "node": "nd1",
+                "phs": ["A", "B", "C"]
+            }],
+            "v_setpoint": 11000
+        },
+        {
+            "id": "nd1",
+            "type": "Node",
+            "phs": ["A", "B", "C"],
+            "v_base": 11000
+        },
+        {
+            "id": "nd4",
+            "type": "Node",
+            "phs": ["A", "B", "C"],
+            "v_base": 415
+        }
+    ]
 }

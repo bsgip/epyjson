@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+
+import json
+import sys
+
+from epyjson import dump_pretty
+
+
+from_path = sys.argv[1]
+to_path = sys.argv[2] if len(sys.argv) == 3 else from_path
+
+with open(from_path) as f:
+    netw = json.load(f)
+
+units = netw['units']
+vf = units['voltage']
+zf = units['impedance']
+pf = units['power']
+if_ = units['current']
+
+del netw['units']
+
+netw['components'] = [
+    (cid, ctype, cdata)
+    for cid, c1 in netw['components'].items() for ctype, cdata in c1.items()
+]
+
+for i, (cid, ctype, cdata) in enumerate(netw['components']):
+    cdata_new = {"id": cid, "type": ctype}
+
+    if 'cons' in cdata:
+        cdata_new['cons'] = cdata['cons']
+
+    if 'phs' in cdata:
+        cdata_new['phs'] = cdata['phs']
+
+    if 'user_data' in cdata:
+        cdata_new['user_data'] = cdata['user_data']
+
+    cdata_new = cdata_new | {k: v for k, v in cdata.items() if k not in ('phs', 'cons', 'user_data')}
+
+    netw['components'][i] = cdata_new
+
+
+def tocplx(z):
+    return complex(*z) if isinstance(z, list) else complex(z, 0.0)
+
+
+def fromcplx(z):
+    return [z.real, z.imag]
+
+
+for c in netw['components']:
+    if c['type'] == 'Gen':
+        c['type'] = 'Generator'
+
+    if 'v_base' in c:
+        c['v_base'] *= vf
+
+    if 'v_setpoint' in c:
+        c['v_setpoint'] *= vf
+
+    if 'v_winding_base' in c:
+        c['v_winding_base'] = [x * vf for x in c['v_winding_base']]
+
+    if c['type'] == 'Transformer':
+        if 'z' in c:
+            (c['z_p'], c['z_s']) = [fromcplx(tocplx(x)) * zf for x in c['z']]
+            del c['z']
+
+        if 'z0' in c:
+            (c['z0_p'], c['z0_s']) = [fromcplx(tocplx(x)) * zf for x in c['z0']]
+            del c['z0']
+    else:
+        if 'z' in c:
+            c['z'] = fromcplx(tocplx(c['z']) * zf)
+
+        if 'z0' in c:
+            c['z0'] = fromcplx(tocplx(c['z0']) * zf)
+
+    if 's_max' in c:
+        c['s_max'] *= vf
+
+    if 'i_max' in c:
+        c['i_max'] *= if_
+
+with open(to_path, 'w+') as f:
+    dump_pretty(netw, f)
