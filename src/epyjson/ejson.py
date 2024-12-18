@@ -29,6 +29,23 @@ def get_schema() -> dict:
     return schema
 
 
+def order_component_keys(c):
+    '''
+    Nicely order the keys in an e-JSON component dict as follows:
+    id, type, cons, phs, everything ... else, user_data
+    '''
+
+    first = [k for k in ('id', 'type', 'cons', 'phs') if k in c]
+    last = ['user_data'] if 'user_data' in c else []
+    middle = [k for k in c if k not in first + last]
+
+    retval = {}
+    for ks in (first, middle, last):
+        retval.update({k: c[k] for k in ks})
+
+    return retval
+
+
 class EJson:
     def __init__(self, ejson_dict: dict):
         '''
@@ -99,9 +116,10 @@ class EJson:
 
         # Re-add the connections data
         comps = [copy.deepcopy(x) for x in self.components()]
-        for c in comps:
+        for i, c in enumerate(comps):
             if c['type'] != 'Node':
                 c['cons'] = [{'node': x[1]} | x[3] for x in self.connections_from(c['id'])]
+                comps[i] = order_component_keys(c)
 
         return self.properties | {'components': comps}
 
