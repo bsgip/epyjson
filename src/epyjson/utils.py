@@ -46,6 +46,10 @@ def is_in_service(comp):
     return ('in_service' not in comp) or comp['in_service']
 
 
+def is_closed(comp):
+    return ('switch_state' not in comp) or comp['switch_state'] != 'open'
+
+
 def remove_hanging_nodes(netw: EJson):
     '''
     Remove hanging nodes: a node that terminates a line and has no other attached components.
@@ -80,8 +84,8 @@ def remove_out_of_service(netw: EJson):
 
 def collapse_elem(netw: EJson, cid):
     '''
-    Remove component cid (normally a line) and coalesce the second and
-    subsequent connected nodes into the first connected node.
+    Remove component cid (normally a connector or line) and coalesce the second
+    and subsequent connected nodes into the first connected node.
     '''
 
     cons = list(netw.connections_from(cid))
@@ -94,6 +98,21 @@ def collapse_elem(netw: EJson, cid):
     for node in nodes[1:]:
         assert len(list(netw.connections_from(node))) == 0
         netw.remove_component(node)
+
+
+def coalesce_connectors(netw: EJson):
+    '''
+    Coalesce switches and connectors - removing them where switches are open,
+    and thereafter merging all associated nodes.
+    '''
+
+    for comp in list(netw.components('Connector')):
+        if not is_in_service(comp) or not is_closed(comp):
+            netw.remove_component(comp['id'])
+        else:
+            collapse_elem(netw, comp['id'])
+
+    return netw
 
 
 def merge_short_circuits(netw: EJson) -> EJson:
@@ -124,8 +143,9 @@ def is_zero_impedance(comp: dict) -> bool:
     '''
 
     return is_in_service(comp) and (
-        comp['length'] == 0.0
-        or (all(value == 0.0 for value in comp['z']) and all(value == 0.0 for value in comp['z0']))
+        comp['length'] == 0.0 or (
+            all(value == 0.0 for value in comp['z']) and all(value == 0.0 for value in comp['z0'])
+        )
     )
 
 
