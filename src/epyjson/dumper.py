@@ -49,7 +49,7 @@ class CompactJSONEncoder(json.JSONEncoder):
                 self.indentation_level -= 1
                 return "{\n" + ",\n".join(output) + "\n" + self.indent_str + "}"
         elif isinstance(o, float):  # Use scientific notation for floats, where appropriate
-            return format(o, "g")
+            return format(o, ".9g")
         elif isinstance(o, str):  # escape newlines
             o = o.replace("\n", "\\n")
             return f'"{o}"'
