@@ -108,7 +108,11 @@ def coalesce_connectors(netw: EJson):
 
     for comp in list(netw.components('Connector')):
         if not is_in_service(comp) or not is_closed(comp):
+            con_nds = [x[1] for x in netw.connections_from(comp['id'])]
             netw.remove_component(comp['id'])
+            for con_nd in con_nds:
+                if len(list(netw.connections_from(con_nd))) == 0:
+                    netw.remove_component(con_nd)
         else:
             collapse_elem(netw, comp['id'])
 
@@ -456,6 +460,31 @@ def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool)
             c['xy'] = (A_inv @ (np.array(c['lat_long']) - b)).tolist()
         elif 'xy' in c:
             c['lat_long'] = (A @ np.array(c['xy']) + b).tolist()
+
+
+def _add_missing_locs_cb(netw, comp, accum, key):
+    found = comp['type'] == 'Node' and key in comp
+    if found:
+        accum.append(comp[key])
+
+    return (found, accum)
+
+
+def add_missing_locations(netw: EJson, keys=['xy', 'lat_long']) -> EJson:
+    for key in keys:
+        all_poss = (nd[key] for nd in netw.components('Node') if key in nd)
+        default = [sum(xs) / len(xs) for xs in zip(*all_poss)]
+
+        nds_without_key = [nd for nd in netw.components('Node') if key not in nd]
+        for nd in nds_without_key:
+            _, poss = netw.dfs(
+                nd['id'],
+                pre_cb=lambda netw, comp, accum: _add_missing_locs_cb(netw, comp, accum, key),
+                accum=[]
+            )
+            nd[key] = [sum(xs) / len(xs) for xs in zip(*poss)] if len(poss) > 0 else default
+
+    return netw
 
 
 def make_radial(netw: EJson, start_id: str):
