@@ -58,7 +58,7 @@ def remove_hanging_nodes(netw: EJson):
     for comp in netw.components('Node'):
         adj = list(netw.connections_from(comp['id']))
         if len(adj) == 1:
-            comp_to = netw.component(adj[0][1])
+            comp_to = netw.component(adj[0].cid_1)
             if comp_to['type'] == 'Line':
                 to_remove.append(comp['id'])
                 to_remove.append(comp_to['id'])
@@ -90,10 +90,10 @@ def collapse_elem(netw: EJson, cid):
 
     cons = list(netw.connections_from(cid))
     netw.remove_component(cid)
-    nodes = [x[1] for x in cons]
+    nodes = [x.cid_1 for x in cons]
     for node in nodes[1:]:
         for con in list(netw.connections_from(node)):
-            netw.reconnect_elem(con[1], {node: nodes[0]})
+            netw.reconnect_elem(con.cid_1, {node: nodes[0]})
 
     for node in nodes[1:]:
         assert len(list(netw.connections_from(node))) == 0
@@ -108,7 +108,7 @@ def coalesce_connectors(netw: EJson):
 
     for comp in list(netw.components('Connector')):
         if not is_in_service(comp) or not is_closed(comp):
-            con_nds = [x[1] for x in netw.connections_from(comp['id'])]
+            con_nds = [x.cid_1 for x in netw.connections_from(comp['id'])]
             netw.remove_component(comp['id'])
             for con_nd in con_nds:
                 if len(list(netw.connections_from(con_nd))) == 0:
@@ -168,8 +168,8 @@ def is_short_circuit(comp: dict, netw: EJson) -> bool:
     if not is_zero_impedance(comp):
         return False
 
-    l_phs = [con[3]['phs'] for con in netw.connections_from(comp['id'])]
-    nds = [netw.component(con[1]) for con in netw.connections_from(comp['id'])]
+    l_phs = [con.con['phs'] for con in netw.connections_from(comp['id'])]
+    nds = [netw.component(con.cid_1) for con in netw.connections_from(comp['id'])]
     nd_phs = [x['phs'] for x in nds]
     return l_phs == nd_phs
 
@@ -184,9 +184,9 @@ def merge_dups(netw: EJson) -> EJson:
     dups = {}
     for comp in all_lines:
         cons = netw.connections_from(comp['id'])
-        cons_sorted = sorted(cons, key=lambda con: f'{con[1]}:{con[2]}')
-        con_nids = [x[1] for x in cons_sorted]
-        con_phs = [','.join(x[3]['phs']) for x in cons_sorted]
+        cons_sorted = sorted(cons, key=lambda con: f'{con.cid_1}:{con.term_idx}')
+        con_nids = [x.cid_1 for x in cons_sorted]
+        con_phs = [','.join(x.con['phs']) for x in cons_sorted]
         in_serv = is_in_service(comp)
         k = '|'.join([','.join(x) for x in zip(con_nids, con_phs)] + [str(in_serv)])
         dups.setdefault(k, []).append(comp)
@@ -241,7 +241,7 @@ def merge_strings(netw: EJson):
         '''
 
         cons = netw.connections_from(comp['id'])
-        phasings = [con[3]['phs'] for con in cons]
+        phasings = [con.con['phs'] for con in cons]
         if phasings[0] == phasings[1]:
             return phasings[0]
         else:
@@ -283,7 +283,7 @@ def merge_strings(netw: EJson):
         # If not, do the pieces separately.
         cons = list(netw.connections_between(ordered[0]['id'], ordered[1]['id']))
         assert len(cons) == 1
-        con = (ordered[0]['id'], ordered[-1]['id'], cons[0][3])
+        con = (ordered[0]['id'], ordered[-1]['id'], cons[0].con)
         for i_nd in range(2, len(ordered) - 1, 2):
             l0 = ordered[i_nd - 1]
             assert l0['type'] == 'Line'
@@ -504,7 +504,7 @@ def make_radial(netw: EJson, start_id: str):
             return (True, accum)
 
         if cur['type'] == 'Line':
-            nd1 = list(netw.connections_from(cur['id']))[1][1]
+            nd1 = list(netw.connections_from(cur['id']))[1].cid_1
             if nd1 in accum[0]:
                 accum[1].append(cur['id'])
                 return (True, accum)
@@ -559,7 +559,7 @@ def make_single_phased(netw: EJson):
     for line in lines:
         cons = list(netw.connections_from(line['id']))
         assert len(cons) == 2
-        nph = len([x for x in cons[0][3]['phs'] if x.lower() not in 'ng'])
+        nph = len([x for x in cons[0].con['phs'] if x.lower() not in 'ng'])
         line['z'] = [x * 3 / nph for x in line['z']]
         line['z0'] = line['z']
         try:
@@ -704,7 +704,7 @@ def _audit_circular_cons(netw: EJson, aud: dict):
 
     for comp in netw.components(elems_only=True):
         for cons in netw.connections_from(comp['id']):
-            if len(cons) == 2 and cons[0][1] == cons[1][1]:
+            if len(cons) == 2 and cons[0].cid_1 == cons[1].cid_1:
                 probs.append({
                     'type': 'error',
                     'fixed': False,
@@ -721,17 +721,17 @@ def _audit_conn_phase_consistency(netw: EJson, aud: dict):
 
     for con in netw.connections():
         try:
-            nd_comp = netw.component(con[1])
-            con_phs = con[3]['phs']
+            nd_comp = netw.component(con.cid_1)
+            con_phs = con.con['phs']
             nd_phs = nd_comp['phs']
             if not (set(con_phs) <= set(nd_phs)):
                 probs.append({
                     'type': 'error',
                     'fixed': False,
                     'details': {
-                        'elem_id': con[0],
-                        'node_id': con[1],
-                        'con_idx': con[2],
+                        'elem_id': con.cid_0,
+                        'node_id': con.cid_1,
+                        'con_idx': con.term_idx,
                         'con_phs': con_phs,
                         'node_phs': nd_phs
                     }

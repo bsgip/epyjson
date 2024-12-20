@@ -2,7 +2,7 @@
 # vim:tw=120:et
 
 import copy
-from dataclasses import dataclass
+from collections import namedtuple
 import importlib.resources
 import json
 import logging
@@ -44,6 +44,23 @@ def order_component_keys(c):
         retval.update({k: c[k] for k in ks})
 
     return retval
+
+
+Connection = namedtuple('Connection', ('cid_0', 'cid_1', 'term_idx', 'con'))
+
+
+def elem_node(con: Connection):
+    '''
+    Order con with the element listed first and then the node.
+    '''
+    return Connection(con.cid_1, con.cid_0, con.term_idx, con.con) if con.cid_0 == con.con['node'] else con
+
+
+def node_elem(con: Connection):
+    '''
+    Order con with the node listed first and then the element.
+    '''
+    return Connection(con.cid_1, con.cid_0, con.term_idx, con.con) if con.cid_1 == con.con['node'] else con
 
 
 class EJson:
@@ -118,7 +135,7 @@ class EJson:
         comps = [copy.deepcopy(x) for x in self.components()]
         for i, c in enumerate(comps):
             if c['type'] != 'Node':
-                c['cons'] = [{'node': x[1]} | x[3] for x in self.connections_from(c['id'])]
+                c['cons'] = [{'node': x.cid_1} | x.con for x in self.connections_from(c['id'])]
                 comps[i] = order_component_keys(c)
 
         return self.properties | {'components': comps}
@@ -154,13 +171,13 @@ class EJson:
         Return all connections in the network
 
         Returns:
-            ((component_1, component_2, terminal_idx, connection_data), ...)
+            (Connection(component_1, component_2, terminal_idx, connection_data), ...)
             where terminal_idx is the index in the element's 'cons' array,
             e.g. for a line or transformer with two terminals, terminal_idx
             could be either 0 or 1
         '''
 
-        return (x for x in self.graph.edges(keys=True, data='con'))
+        return (Connection(*x) for x in self.graph.edges(keys=True, data='con'))
 
     def connections_from(self, cid: str):
         '''
@@ -170,13 +187,13 @@ class EJson:
             cid: The component we want to find connections from
 
         Returns:
-            ((cid, connected_component, terminal_idx, connection_data), ...)
+            (Connection(cid, connected_component, terminal_idx, connection_data), ...)
             where terminal_idx is the index in the element's 'cons' array,
             e.g. for a line or transformer with two terminals, terminal_idx
             could be either 0 or 1
         '''
 
-        return (x for x in self.graph.edges(cid, keys=True, data='con'))
+        return (Connection(*x) for x in self.graph.edges(cid, keys=True, data='con'))
 
     def connections_between(self, cid_a: str, cid_b: str):
         '''
@@ -187,16 +204,16 @@ class EJson:
             cid_b: The second component we want to find connections between
 
         Returns:
-            ((cid_a, cid_b, terminal_idx, connection_data), ...)
+            (Connection(cid_a, cid_b, terminal_idx, connection_data), ...)
             where terminal_idx is the index in the element's 'cons' array,
             e.g. for a line or transformer with two terminals, terminal_idx
             could be either 0 or 1
         '''
 
         try:
-            return ((cid_a, cid_b, k, v['con']) for k, v in self.graph.adj[cid_a][cid_b].items())
+            return (Connection(cid_a, cid_b, k, v['con']) for k, v in self.graph.adj[cid_a][cid_b].items())
         except KeyError:
-            return (x for x in ())
+            return ()
 
     def neighbors(self, cid: str):
         return self.graph.neighbors(cid)
@@ -336,10 +353,10 @@ class EJson:
                 cons = list(self.connections_from(c['id']))
 
                 if c['type'] != 'Transformer':
-                    cons = sorted(cons, key=lambda x: ordering[x[1]])
+                    cons = sorted(cons, key=lambda x: ordering[x.cid_1])
 
                 for i, con in enumerate(cons):
-                    new_graph.add_edge(con[0], con[1], key=i, con=con[3])
+                    new_graph.add_edge(con.cid_0, con.cid_1, key=i, con=con.con)
 
         self.graph = new_graph
 
@@ -436,7 +453,7 @@ def _netw_components(netw_ejson, ctype: str = None) -> Generator:
     '''
 
     return (x for x in netw_ejson['components']) if ctype is None else \
-           (x for x in netw_ejson['components'] if x[1] == ctype)
+           (x for x in netw_ejson['components'] if x.cid_1 == ctype)
 
 
 def _graph_add_node(graph: nx.MultiGraph, c: dict):
