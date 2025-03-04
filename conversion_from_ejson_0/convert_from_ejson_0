@@ -65,11 +65,11 @@ for c in netw['components']:
 
     if c['type'] == 'Transformer':
         if 'z' in c:
-            (c['z_p'], c['z_s']) = [fromcplx(tocplx(x)) * zf for x in c['z']]
+            (c['z_p'], c['z_s']) = [fromcplx(tocplx(x) * zf) for x in c['z']]
             del c['z']
 
         if 'z0' in c:
-            (c['z0_p'], c['z0_s']) = [fromcplx(tocplx(x)) * zf for x in c['z0']]
+            (c['z0_p'], c['z0_s']) = [fromcplx(tocplx(x) * zf) for x in c['z0']]
             del c['z0']
     else:
         if 'z' in c:
