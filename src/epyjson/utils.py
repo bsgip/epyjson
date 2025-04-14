@@ -66,6 +66,8 @@ def remove_hanging_nodes(netw: EJson):
     for cid in to_remove:
         netw.remove_component(cid)
 
+    return netw
+
 
 def remove_out_of_service(netw: EJson):
     '''
@@ -80,6 +82,8 @@ def remove_out_of_service(netw: EJson):
             netw.remove_component(comp['id'])
 
     netw.remove_unconnected_nodes()
+    
+    return netw
 
 
 def collapse_elem(netw: EJson, cid):
@@ -98,6 +102,8 @@ def collapse_elem(netw: EJson, cid):
     for node in nodes[1:]:
         assert len(list(netw.connections_from(node))) == 0
         netw.remove_component(node)
+    
+    return netw
 
 
 def coalesce_connectors(netw: EJson):
@@ -364,6 +370,8 @@ def merge_strings(netw: EJson):
         netw.add_comp(c)
         netw.connect(c['id'], con[0], 0, con[2])
         netw.connect(c['id'], con[1], 1, con[2])
+    
+    return netw
 
 
 def reduce_network(netw: EJson):
@@ -412,6 +420,8 @@ def reduce_network(netw: EJson):
             break
 
     report_stats(netw, 'Final', logger.info)
+    
+    return netw
 
 
 def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool):
@@ -460,6 +470,8 @@ def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool)
             c['xy'] = (A_inv @ (np.array(c['lat_long']) - b)).tolist()
         elif 'xy' in c:
             c['lat_long'] = (A @ np.array(c['xy']) + b).tolist()
+    
+    return netw
 
 
 def _add_missing_locs_cb(netw, comp, accum, key):
@@ -526,6 +538,8 @@ def make_radial(netw: EJson, start_id: str):
 
     for cid in to_remove:
         netw.remove_component(cid)
+    
+    return netw
 
 
 def make_single_phased(netw: EJson):
@@ -600,6 +614,8 @@ def make_single_phased(netw: EJson):
             tx['nom_turns_ratio'] = tx['nom_turns_ratio'] * mult[0] / mult[1]
         if 'taps' in tx:
             tx['taps'] = [tx['taps'][0]]
+    
+    return netw
 
 
 def scale_loads(netw: EJson, factor: complex) -> nx.Graph:
@@ -613,6 +629,8 @@ def scale_loads(netw: EJson, factor: complex) -> nx.Graph:
 
     for load in netw.components('Load'):
         load['s_nom'] = [c2a(factor * a2c(x)) for x in load['s_nom']]
+    
+    return netw
 
 
 def set_balanced_loads(netw: EJson, tot_load: complex) -> nx.Graph:
@@ -627,6 +645,8 @@ def set_balanced_loads(netw: EJson, tot_load: complex) -> nx.Graph:
     for load in netw.components('Load'):
         n = len(load['s_nom'])
         load['s_nom'] = [c2a(tot_load / n)] * n
+    
+    return netw
 
 
 def audit(netw: EJson) -> dict:
