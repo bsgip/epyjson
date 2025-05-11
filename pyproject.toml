@@ -1,3 +1,17 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "epyjson"
+version = "0.1.2"
+description = "Python library for processing e-JSON"
+dependencies = [
+    "jsonschema",
+    "numpy",
+    "networkx",
+    "ordered-set",
+]
+
+[tool.setuptools.package-data]
+epyjson = ["e-json-schema.json"]
