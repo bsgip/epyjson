@@ -1,4 +1,6 @@
+import os
 import pathlib
+import tempfile
 
 import epyjson as epj
 
@@ -51,10 +53,12 @@ def test_quick_tests():
 
 def test_round_trip():
     netw_a = epj.EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
-    tmpfile = pathlib.Path('/Users/dan/Desktop/netw_epyjson_test_round_trip.json')
-    netw_a.write_to_file(tmpfile)
-    netw_b = epj.EJson.read_from_file('/Users/dan/Desktop/netw_epyjson_test_round_trip.json')
-    tmpfile.unlink()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpfile = os.path.join(tmpdir, 'temp.json')
+        netw_a.write_to_file(tmpfile)
+        netw_b = epj.EJson.read_from_file(tmpfile)
+
     assert netw_a.raw_ejson == netw_b.raw_ejson
 
 
