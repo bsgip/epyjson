@@ -217,6 +217,9 @@
                 "v_setpoint": {
                     "$ref": "#/definitions/positiveNumber",
                     "description": "Line to ground voltage magnitude setpoint"
+                },
+                "i_max": {
+                    "type": ["number", "null"]
                 }
             },
             "required": ["id", "type", "cons", "v_setpoint"],
