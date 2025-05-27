@@ -95,24 +95,34 @@ def collapse_elem(netw: EJson, cid):
     cons = list(netw.connections_from(cid))
     netw.remove_component(cid)
     nodes = [x.cid_1 for x in cons]
-    for node in nodes[1:]:
+    node_0 = nodes[0]
+    other_nodes = [x for x in nodes[1:] if x != node_0]  # Guard against circular connections, just in case.
+    for node in other_nodes:
         for con in list(netw.connections_from(node)):
             netw.reconnect_elem(con.cid_1, {node: nodes[0]})
 
-    for node in nodes[1:]:
+    for node in other_nodes:
         assert len(list(netw.connections_from(node))) == 0
         netw.remove_component(node)
     
     return netw
 
 
-def coalesce_connectors(netw: EJson):
+def coalesce_connectors(
+        netw: EJson, coalesce_only_unswitched: bool = False, coalesce_only_not_two_phase: bool = False
+):
     '''
     Coalesce switches and connectors - removing them where switches are open,
     and thereafter merging all associated nodes.
     '''
 
     for comp in list(netw.components('Connector')):
+        if coalesce_only_unswitched and comp['switch_state'] != "no_switch":
+            continue
+
+        if coalesce_only_not_two_phase and len(list(netw.connections_from(comp['id']))) == 2:
+            continue
+
         if not is_in_service(comp) or not is_closed(comp):
             con_nds = [x.cid_1 for x in netw.connections_from(comp['id'])]
             netw.remove_component(comp['id'])
