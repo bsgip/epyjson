@@ -50,6 +50,10 @@ def is_closed(comp) -> bool:
     return ('switch_state' not in comp) or comp['switch_state'] != 'open'
 
 
+def is_live(comp) -> bool:
+    return is_in_service(comp) and is_closed(comp)
+
+
 def remove_hanging_nodes(netw: EJson) -> EJson:
     '''
     Remove hanging nodes: a node that terminates a line and has no other attached components.
