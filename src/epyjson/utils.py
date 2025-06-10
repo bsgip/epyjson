@@ -38,19 +38,19 @@ def c2a(c: complex) -> List[float]:
     return [c.real, c.imag]
 
 
-def user_data(comp):
+def user_data(comp) -> dict:
     return comp.setdefault('user_data', {})
 
 
-def is_in_service(comp):
+def is_in_service(comp) -> bool:
     return ('in_service' not in comp) or comp['in_service']
 
 
-def is_closed(comp):
+def is_closed(comp) -> bool:
     return ('switch_state' not in comp) or comp['switch_state'] != 'open'
 
 
-def remove_hanging_nodes(netw: EJson):
+def remove_hanging_nodes(netw: EJson) -> EJson:
     '''
     Remove hanging nodes: a node that terminates a line and has no other attached components.
     '''
@@ -69,12 +69,15 @@ def remove_hanging_nodes(netw: EJson):
     return netw
 
 
-def remove_out_of_service(netw: EJson):
+def remove_out_of_service(netw: EJson) -> EJson:
     '''
     Remove components that are out of service.
 
     Args:
         graph: e-JSON graph, result of make_graph(...)
+    
+    Returns:
+        in-place mutated network
     '''
 
     for comp in list(netw.components()):
@@ -86,7 +89,7 @@ def remove_out_of_service(netw: EJson):
     return netw
 
 
-def collapse_elem(netw: EJson, cid):
+def collapse_elem(netw: EJson, cid) -> EJson:
     '''
     Remove component cid (normally a connector or line) and coalesce the second
     and subsequent connected nodes into the first connected node.
@@ -110,7 +113,7 @@ def collapse_elem(netw: EJson, cid):
 
 def coalesce_connectors(
         netw: EJson, coalesce_only_unswitched: bool = False, coalesce_only_not_two_phase: bool = False
-):
+) -> EJson:
     '''
     Coalesce switches and connectors - removing them where switches are open,
     and thereafter merging all associated nodes.
@@ -240,7 +243,7 @@ def merge_dups(netw: EJson) -> EJson:
     return netw
 
 
-def merge_strings(netw: EJson):
+def merge_strings(netw: EJson) -> EJson:
     '''
     Merge strings of lines where possible.
 
@@ -249,6 +252,9 @@ def merge_strings(netw: EJson):
 
     Args:
         graph: e-JSON graph, result of make_graph(...)
+    
+    Returns:
+        in-place mutated network
     '''
 
     def get_phasing(netw: EJson, comp):
@@ -384,12 +390,15 @@ def merge_strings(netw: EJson):
     return netw
 
 
-def reduce_network(netw: EJson):
+def reduce_network(netw: EJson) -> EJson:
     '''
     Reduce the size of the network by telescoping lines together, merging duplicated lines and removing unused spurs.
 
     Args:
         netw: eJson network
+    
+    Returns:
+        in-place mutated network
     '''
 
     def report_stats(netw: EJson, prefix: str, log=logger.debug):
@@ -434,7 +443,7 @@ def reduce_network(netw: EJson):
     return netw
 
 
-def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool):
+def add_map(netw: EJson, points: Sequence[dict]) -> EJson:
     '''
     Given 2 or 3 points with both (x, y) and (lat, lon), find the transformation A, b st. latlon = A xy + b
     Then add the missing information, e.g. add xy if a node has lat_long or vice-versa.
@@ -442,6 +451,9 @@ def add_map(netw: EJson, points: Sequence[dict], add_latlon: bool, add_xy: bool)
     Args:
         netw: the EJson network
         points: list of points, [{'x': <x>, 'y': <y>, 'lat': <lat>, 'lon': <lon>}, ...]
+    
+    Returns:
+        in-place mutated network
     '''
 
     x = [p['x'] for p in points]
@@ -509,13 +521,16 @@ def add_missing_locations(netw: EJson, keys=['xy', 'lat_long']) -> EJson:
     return netw
 
 
-def make_radial(netw: EJson, start_id: str):
+def make_radial(netw: EJson, start_id: str) -> EJson:
     '''
     Break cycles, making the graph radial.
 
     Args:
         netw: EJson network
         start_id: Depth first search starting component.
+    
+    Returns:
+        in-place mutated network
     '''
 
     # The code assumes everything is correctly ordered. Do it in case it hasn't already been done.
@@ -552,7 +567,7 @@ def make_radial(netw: EJson, start_id: str):
     return netw
 
 
-def make_single_phased(netw: EJson):
+def make_single_phased(netw: EJson) -> EJson:
     '''
     Given a three / multi phase network, convert to a single phase balanced network.
 
@@ -565,6 +580,9 @@ def make_single_phased(netw: EJson):
 
     Args:
         netw: e-JSON network
+    
+    Returns:
+        in-place mutated network
     '''
 
     s3 = math.sqrt(3.0)
@@ -628,13 +646,16 @@ def make_single_phased(netw: EJson):
     return netw
 
 
-def scale_loads(netw: EJson, factor: complex) -> nx.Graph:
+def scale_loads(netw: EJson, factor: complex) -> EJson:
     '''
     Scale network loads by a complex factor.
 
     Args:
         netw: e-JSON object
         factor: scaling factor
+    
+    Returns:
+        in-place mutated network
     '''
 
     for load in netw.components('Load'):
@@ -643,13 +664,16 @@ def scale_loads(netw: EJson, factor: complex) -> nx.Graph:
     return netw
 
 
-def set_balanced_loads(netw: EJson, tot_load: complex) -> nx.Graph:
+def set_balanced_loads(netw: EJson, tot_load: complex) -> EJson:
     '''
     Set all loads to a balanced constant load.
 
     Args:
         netw: e-JSON network
         factor: scaling factor
+    
+    Returns:
+        in-place mutated network
     '''
 
     for load in netw.components('Load'):
