@@ -475,6 +475,34 @@ def remove_unsupplied(netw: EJson) -> EJson:
     return netw
 
 
+def _upstream_txs_cb(_, comp, accum):
+    if not is_live(comp):
+        return True, accum
+    elif comp['type'] == 'Transformer':
+        accum.append(comp['id'])
+        return (True, accum)
+    else:
+        return (False, accum)
+
+def annotate_upstream_transformers(netw: EJson, comp_types: list[str]) -> EJson:
+    '''
+    For selected component types, annotate components with a list of all
+    live-connected upstream transformers. Only those immediately upstream are
+    included, e.g. we stop the depth first search branch after finding a
+    transformer.
+    
+    Args:
+        netw: the EJson network
+    
+    Returns:
+        in-place mutated network
+    '''
+    for comp_type in comp_types:
+        for comp in netw.components(comp_type):
+            _, txs = netw.dfs(comp, pre_cb=_upstream_txs_cb, accum=[])
+            comp.setdefault("user_data", {})["upstream_txs"] = txs
+
+
 def add_map(netw: EJson, points: Sequence[dict]) -> EJson:
     '''
     Given 2 or 3 points with both (x, y) and (lat, lon), find the transformation A, b st. latlon = A xy + b
