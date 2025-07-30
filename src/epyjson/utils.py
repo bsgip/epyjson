@@ -38,29 +38,82 @@ def c2a(c: complex) -> List[float]:
     return [c.real, c.imag]
 
 
-def user_data(comp) -> dict:
-    return comp.setdefault('user_data', {})
+def user_data(comp: dict) -> dict:
+    '''
+    Return component's user_data, or empty dict by default.
+
+    Args:
+        comp: component dict
+    
+    Returns:
+        Component's user_data, or {} if absent
+    '''
+    return comp.get('user_data', {})
 
 
-def is_in_service(comp) -> bool:
+def is_in_service(comp: dict) -> bool:
+    '''
+    Return compnent's in_service property, or True if absent 
+
+    Args:
+        comp: component dict
+    
+    Returns:
+        True iff the component is in service
+    '''
+    
     return comp.get('in_service', True)
 
 
-def switch_state(comp) -> bool:
+def switch_state(comp: dict) -> str:
+    '''
+    Return compnent's switch_state property, or 'no_switch' if absent 
+
+    Args:
+        comp: component dict
+    
+    Returns:
+        String specifying component's switch_state
+    '''
     return comp.get('switch_state', 'no_switch')
 
 
-def is_closed(comp) -> bool:
+def is_closed(comp: dict) -> bool:
+    '''
+    Return False if component's switch_state is 'open', or True otherwise
+
+    Args:
+        comp: component dict
+    
+    Returns:
+        True iff the component has a closed switch or is unswitched
+    '''
     return switch_state(comp) != 'open'
 
 
-def is_live(comp) -> bool:
+def is_live(comp: dict) -> bool:
+    '''
+    Return True if the component is electrically live (in service and switch
+    closed), or False otherwise
+
+    Args:
+        comp: component dict
+    
+    Returns:
+        True iff the component is electrically live.
+    '''
     return is_in_service(comp) and is_closed(comp)
 
 
 def remove_hanging_nodes(netw: EJson) -> EJson:
     '''
     Remove hanging nodes: a node that terminates a line and has no other attached components.
+
+    Args:
+        netw: eJson network
+
+    Returns:
+        in-place mutated network
     '''
     to_remove = []
     for comp in netw.components('Node'):
@@ -82,8 +135,8 @@ def remove_not_live(netw: EJson) -> EJson:
     Remove components that are not live.
 
     Args:
-        graph: e-JSON graph, result of make_graph(...)
-    
+        netw: eJson network
+
     Returns:
         in-place mutated network
     '''
@@ -97,10 +150,16 @@ def remove_not_live(netw: EJson) -> EJson:
     return netw
 
 
-def collapse_elem(netw: EJson, cid) -> EJson:
+def collapse_elem(netw: EJson, cid: str) -> EJson:
     '''
     Remove component cid (normally a connector or line) and coalesce the second
     and subsequent connected nodes into the first connected node.
+
+    Args:
+        netw: eJson network
+
+    Returns:
+        in-place mutated network
     '''
 
     cons = list(netw.connections_from(cid))
@@ -126,6 +185,14 @@ def coalesce_connectors(
     Coalesce switches and connectors - removing them where switches are open
     or the component is out of service, and thereafter merging all associated
     nodes.
+
+    Args:
+        netw: eJson network
+        coalesce_only_unswitched: Only coalesce connectors that lack a switch
+        coalesce_only_not_two_phase: Only coalesce connectors with three or more phases
+
+    Returns:
+        in-place mutated network
     '''
 
     for comp in list(netw.components('Connector')):
@@ -153,6 +220,12 @@ def merge_short_circuits(netw: EJson) -> EJson:
 
     A short circuit line is a line that fully short circuits all phases between two nodes. In such cases, we can
     simply remove the line and merge the two nodes.
+    
+    Args:
+        netw: eJson network
+
+    Returns:
+        in-place mutated network
     '''
 
     merges = [l['id'] for l in netw.components('Line') if is_short_circuit(l, netw)]
@@ -186,8 +259,8 @@ def is_short_circuit(comp: dict, netw: EJson) -> bool:
     Returns True if a line short circuits ALL phases between its nodes.
 
     Args:
-        netw: eJson network
         comp: dict for a Line.
+        netw: eJson network
 
     Returns:
         boolean value that is true iff the line is zero impedance and connects all phases between its two nodes.
@@ -205,6 +278,12 @@ def is_short_circuit(comp: dict, netw: EJson) -> bool:
 def merge_dups(netw: EJson) -> EJson:
     '''
     Merge duplicated lines.
+    
+    Args:
+        netw: eJson network
+
+    Returns:
+        in-place mutated network
     '''
 
     all_lines = list(netw.components('Line'))
@@ -260,7 +339,7 @@ def merge_strings(netw: EJson) -> EJson:
     sequence, and whose connection phasings are all the same.
 
     Args:
-        graph: e-JSON graph, result of make_graph(...)
+        netw: eJson network
     
     Returns:
         in-place mutated network
@@ -426,7 +505,7 @@ def reduce_network(netw: EJson) -> EJson:
             log(f'        Number of {t}s = {n}')
 
     for line in netw.components('Line'):
-        user_data(line)['orig_ids'] = [line['id']]
+        line.setdefault('user_data', {})['orig_ids'] = [line['id']]
 
     report_stats(netw, 'Initial', logger.info)
     while True:
@@ -466,7 +545,7 @@ def remove_unsupplied(netw: EJson) -> EJson:
 
     connected = OrderedSet()
     for infeeder in netw.components('Infeeder'):
-        if infeeder.is_live():
+        if is_live(infeeder):
             visited, _ = netw.dfs(infeeder, stop_cb=lambda _, comp: not is_live(comp))
             connected.update(visited)
 
@@ -565,6 +644,16 @@ def _add_missing_locs_cb(netw, comp, accum, key):
 
 
 def add_missing_locations(netw: EJson, keys=['xy', 'lat_long']) -> EJson:
+    '''
+    Add missing locations by averaging the graph theoretic nearest locations.
+
+    Args:
+        netw: the EJson network
+        keys: list containing elements of 'xy' and 'lat_long' to patch missing
+    
+    Returns:
+        in-place mutated network
+    '''
     for key in keys:
         all_poss = (nd[key] for nd in netw.components('Node') if key in nd)
         default = [sum(xs) / len(xs) for xs in zip(*all_poss)]
@@ -748,7 +837,7 @@ def audit(netw: EJson) -> dict:
     Audit e-JSON.
 
     Args:
-        graph: e-JSON graph, result of make_graph(...)
+        netw: e-JSON network
 
     Returns:
         dict containing the results of the audit.
