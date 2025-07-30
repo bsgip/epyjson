@@ -452,6 +452,29 @@ def reduce_network(netw: EJson) -> EJson:
     return netw
 
 
+def remove_unsupplied(netw: EJson) -> EJson:
+    '''
+    Remove unsupplied components from the network, i.e. those that are not
+    connected to an infeeder via a live path.
+
+    Args:
+        netw: the EJson network
+    
+    Returns:
+        in-place mutated network
+    '''
+
+    connected = OrderedSet()
+    for infeeder in netw.components('Infeeder'):
+        if infeeder.is_live():
+            visited, _ = netw.dfs(infeeder, stop_cb=lambda _, comp: not is_live(comp))
+            connected.update(visited)
+
+    netw.graph.remove_nodes_from([n for n in netw.graph if n not in connected])
+
+    return netw
+
+
 def add_map(netw: EJson, points: Sequence[dict]) -> EJson:
     '''
     Given 2 or 3 points with both (x, y) and (lat, lon), find the transformation A, b st. latlon = A xy + b
