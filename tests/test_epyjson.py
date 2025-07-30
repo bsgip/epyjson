@@ -95,9 +95,9 @@ def test_remove_unconnected():
     assert [x['id'] for x in netw.components()] == ['in1', 'nd1']
 
 
-def test_remove_out_of_service():
-    netw = epj.EJson.read_from_file(test_netws_path / 'netw_test_remove_out_of_service.json')
-    epj.remove_out_of_service(netw)
+def test_remove_not_live():
+    netw = epj.EJson.read_from_file(test_netws_path / 'netw_test_remove_not_live.json')
+    epj.remove_not_live(netw)
     assert [x['id'] for x in netw.components()] == ['in1', 'nd1']
 
 

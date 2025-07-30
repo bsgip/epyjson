@@ -43,11 +43,15 @@ def user_data(comp) -> dict:
 
 
 def is_in_service(comp) -> bool:
-    return ('in_service' not in comp) or comp['in_service']
+    return comp.get('in_service', True)
+
+
+def switch_state(comp) -> bool:
+    return comp.get('switch_state', 'no_switch')
 
 
 def is_closed(comp) -> bool:
-    return ('switch_state' not in comp) or comp['switch_state'] != 'open'
+    return switch_state(comp) != 'open'
 
 
 def is_live(comp) -> bool:
@@ -73,9 +77,9 @@ def remove_hanging_nodes(netw: EJson) -> EJson:
     return netw
 
 
-def remove_out_of_service(netw: EJson) -> EJson:
+def remove_not_live(netw: EJson) -> EJson:
     '''
-    Remove components that are out of service.
+    Remove components that are not live.
 
     Args:
         graph: e-JSON graph, result of make_graph(...)
@@ -85,7 +89,7 @@ def remove_out_of_service(netw: EJson) -> EJson:
     '''
 
     for comp in list(netw.components()):
-        if not is_in_service(comp):
+        if not is_live(comp):
             netw.remove_component(comp['id'])
 
     netw.remove_unconnected_nodes()
@@ -119,8 +123,9 @@ def coalesce_connectors(
         netw: EJson, coalesce_only_unswitched: bool = False, coalesce_only_not_two_phase: bool = False
 ) -> EJson:
     '''
-    Coalesce switches and connectors - removing them where switches are open,
-    and thereafter merging all associated nodes.
+    Coalesce switches and connectors - removing them where switches are open
+    or the component is out of service, and thereafter merging all associated
+    nodes.
     '''
 
     for comp in list(netw.components('Connector')):
@@ -130,14 +135,14 @@ def coalesce_connectors(
         if coalesce_only_not_two_phase and len(list(netw.connections_from(comp['id']))) == 2:
             continue
 
-        if not is_in_service(comp) or not is_closed(comp):
+        if is_live(comp):
+            collapse_elem(netw, comp['id'])
+        else:
             con_nds = [x.cid_1 for x in netw.connections_from(comp['id'])]
             netw.remove_component(comp['id'])
             for con_nd in con_nds:
                 if len(list(netw.connections_from(con_nd))) == 0:
                     netw.remove_component(con_nd)
-        else:
-            collapse_elem(netw, comp['id'])
 
     return netw
 
@@ -169,7 +174,7 @@ def is_zero_impedance(comp: dict) -> bool:
         boolean value that is true iff the line is zero length or has z == z0 == 0.
     '''
 
-    return is_in_service(comp) and (
+    return is_live(comp) and (
         comp['length'] == 0.0 or (
             all(value == 0.0 for value in comp['z']) and all(value == 0.0 for value in comp['z0'])
         )
@@ -210,8 +215,8 @@ def merge_dups(netw: EJson) -> EJson:
         cons_sorted = sorted(cons, key=lambda con: f'{con.cid_1}:{con.term_idx}')
         con_nids = [x.cid_1 for x in cons_sorted]
         con_phs = [','.join(x.con['phs']) for x in cons_sorted]
-        in_serv = is_in_service(comp)
-        k = '|'.join([','.join(x) for x in zip(con_nids, con_phs)] + [str(in_serv)])
+        service_status = str(is_in_service(comp)) + str(is_closed(comp))
+        k = '|'.join([','.join(x) for x in zip(con_nids, con_phs)] + [service_status])
         dups.setdefault(k, []).append(comp)
 
     dups = [v for k, v in dups.items() if len(v) > 1]
@@ -226,7 +231,7 @@ def merge_dups(netw: EJson) -> EJson:
         return 1.0 / (l['length'] * np.array([z, z0]))
 
     for dup in dups:
-        # We know that all lines in dup have the same nodes, the same in_service status and the same phasing.
+        # We know that all lines in dup have the same nodes, the same service status and the same phasing.
         min_length = min([x['length'] for x in dup])
         l0 = dup[0]
         drop = []
@@ -541,7 +546,7 @@ def make_radial(netw: EJson, start_id: str) -> EJson:
     netw.reorder(start_id)
 
     def pre_cb(netw: EJson, cur: dict, accum: list):
-        if not is_in_service(cur):
+        if not is_live(cur):
             return (True, accum)
 
         if cur['type'] == 'Line':
