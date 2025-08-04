@@ -198,7 +198,8 @@ def test_reduce():
     assert len(list(netw.components('Line'))) == 11
     epj.reduce_network(netw)
     line_ids = list(x['id'] for x in netw.components('Line'))
-    assert set(line_ids) == set(('ln2_3', 'ln4_5', 'ln5_6', 'ln6_8', 'ln6_7', 'ln9_10'))
+    print(line_ids)
+    assert set(line_ids) == set(('ln4_5', 'ln5_6', 'ln6_8', 'ln9_10', 'merge-1-line', 'merge-2-line'))
     assert len(list(netw.components())) == 19
 
 

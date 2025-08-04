@@ -35,7 +35,7 @@ def c2a(c: complex) -> List[float]:
         [c.real, c.imag]
     '''
 
-    return [c.real, c.imag]
+    return [float(c.real), float(c.imag)]  # Make sure we return regular float, not np.float64
 
 
 def user_data(comp: dict) -> dict:
@@ -331,6 +331,152 @@ def merge_dups(netw: EJson) -> EJson:
     return netw
 
 
+def _get_strings(netw: EJson) -> EJson:
+    g = netw.graph
+
+    subg: nx.MultiGraph = g.subgraph(
+        k for k, v in g.nodes(data='comp') if v['type'] in ('Node', 'Line', 'Connector') and g.degree(k) == 2
+    )
+
+    def ensure_correct_degree(subg):
+        # Nodes should have degree 2 in the subgraph
+        subg: nx.MultiGraph = subg.subgraph(
+            k for k, v in subg.nodes(data='comp') if v['type'] != 'Node' or subg.degree(k) == 2
+        )
+        
+        # Elements should have degree > 0 in the subgraph 
+        subg: nx.MultiGraph = subg.subgraph(k for k in subg.nodes() if subg.degree(k) != 0)
+        return subg
+
+    subg = ensure_correct_degree(subg)
+
+    # Remove nodes or edges where there is a phasing mismatch. A mismatch at a node compoment means two adjacent
+    # lines / connectors are differently connected. A mismatch at an element component means there is a transposition.
+    # In either case, remove the component in question from consideration to be part of a string.
+    keep = set()
+    for nd in sorted(subg.nodes):
+        edges = list(g.edges(nd, keys=True, data='con')) # Note: this may include edges to nodes not in subg
+        assert len(edges) == 2
+        phs0 = edges[0][3]['phs']
+        phs1 = edges[1][3]['phs']
+        if phs0 == phs1:
+            keep.add(nd)
+
+    subg = ensure_correct_degree(subg.subgraph(keep))
+
+    strings = []
+
+    for cc in nx.connected_components(subg):
+        cc_subg = subg.subgraph(cc)
+        ends = sorted(x for x in cc_subg.nodes if cc_subg.degree(x) == 1)
+        if len(ends) == 0:
+            # This must be a circular string: rare but a logical possibility
+            # Simply break the string at any node and everything should be OK.
+            nds = sorted(x for x in cc_subg.nodes if netw.component(x)['type'] == 'Node')
+            cc_subg = cc_subg.subgraph(x for x in cc_subg if x != nds[0])
+            if len(cc_subg.nodes()) < 3:
+                # We want at least 2 lines or connectors separated by at least 1 node
+                continue
+
+            ends = sorted(x for x in cc_subg.nodes if cc_subg.degree(x) == 1)
+        
+        assert len(ends) == 2
+        assert len(cc_subg.nodes) >= 3
+
+        start, end = ends
+        ord = list(nx.dfs_preorder_nodes(cc_subg, source=start))
+
+        # Add on the two external nodes for convenience
+        node_0 = [x for x in g.neighbors(start) if x not in cc_subg.nodes][0]
+        node_1 = [x for x in g.neighbors(end) if x not in cc_subg.nodes][0]
+        ord = [netw.component(x) for x in [node_0] + ord + [node_1]]
+
+        phs = list(g[ord[0]['id']][ord[1]['id']].values())[0]['con']['phs']
+
+        assert ord[0]['type'] == 'Node'
+        assert ord[1]['type'] in ('Line', 'Connector')
+        assert ord[-1]['type'] == 'Node'
+        assert ord[-2]['type'] in ('Line', 'Connector')
+
+        strings.append((ord, phs))
+
+    # Order strings by the first component ID to ensure deterministic behaviour.
+    if len(strings) > 0:
+        strings = sorted(strings, key = lambda x: x[0][0]['id'])
+
+    return strings
+
+
+def _ud_is_merged(ud):
+    return list(ud.keys()) == ['merged_user_data']
+
+
+def _ud_list(lid, ud):
+    return list(ud['merged_user_data'].items()) if _ud_is_merged(ud) else [(lid, ud)]
+
+
+def _merge_ud(comps):
+    return {'merged_user_data': dict(sum((_ud_list(x['id'], user_data(x)) for x in comps), []))}
+
+
+def _merge_string(string: list, merge_i):
+    lines = [x for x in string if x['type'] == 'Line']
+    connectors = [x for x in string if x['type'] == 'Connector']
+    nodes = [x for x in string if x['type'] == 'Node']
+
+    new_is_in_service = all(is_in_service(x) for x in lines)
+    has_switch = any(switch_state(x) != 'no_switch' for x in connectors)
+    is_closed = all(switch_state(x) != 'open' for x in connectors)
+    new_switch_state = ('closed' if is_closed else 'open') if has_switch else 'no_switch'
+
+    new_line = None
+    if len(lines) > 0:
+        ls = np.array([x['length'] for x in lines])
+        l_tot = float(sum(ls))
+        zs = np.array([a2c(x['z']) for x in lines])
+        z0s = np.array([a2c(x['z0']) for x in lines])
+        any_bs = any('b_chg' in x for x in lines)
+        bs = np.array([a2c(x['b_chg']) if 'b_chg' in x else 0.0 + 0.0j for x in lines]) if any_bs else None
+
+        new_line = copy.deepcopy(lines[0])
+        new_line['id'] = f'merge-{merge_i}-line'
+        new_line['length'] = l_tot
+        new_line['z'] = c2a(sum(zs * ls) / l_tot)
+        new_line['z0'] = c2a(sum(z0s * ls) / l_tot)
+        if any_bs:
+            new_line['b_chg'] = c2a(sum(bs * ls) / l_tot)
+        new_line['in_service'] = new_is_in_service
+        new_line['user_data'] = _merge_ud(lines)
+    
+    new_connector = None
+    if len(connectors) > 0:
+        new_connector = copy.deepcopy(connectors[0])
+        new_connector['id'] = f'merge-{merge_i}-connector'
+        new_connector['in_service'] = new_is_in_service
+        new_connector['switch_state'] = new_switch_state
+
+    if new_line is not None and new_connector is not None:
+        new_node = copy.deepcopy(nodes[1])
+        new_node['id'] = f'merge-{merge_i}-node'
+    else:
+        new_node = None
+
+    retval = [string[0]]
+
+    if new_connector is not None:
+        retval.append(new_connector)
+
+    if new_node is not None:
+        retval.append(new_node)
+
+    if new_line is not None:
+        retval.append(new_line)
+
+    retval.append(string[-1])
+   
+    return retval
+
+
 def merge_strings(netw: EJson) -> EJson:
     '''
     Merge strings of lines where possible.
@@ -345,136 +491,25 @@ def merge_strings(netw: EJson) -> EJson:
         in-place mutated network
     '''
 
-    def get_phasing(netw: EJson, comp):
-        '''
-        Get the phasing of a line. Returns None if there is a transposition.
-        '''
+    strings = _get_strings(netw)
+    merge_ids = [x['id'] for x in netw.components() if x['id'].startswith('merge-')] 
+    merge_i = max(int(x.split('-')[1]) for x in merge_ids) + 1 if len(merge_ids) > 0 else 0
+    for string, phs in strings:
+        merged = _merge_string(string, merge_i)
 
-        cons = netw.connections_from(comp['id'])
-        phasings = [con.con['phs'] for con in cons]
-        if phasings[0] == phasings[1]:
-            return phasings[0]
-        else:
-            return None
+        for c in string[1:-1]:
+            netw.remove_component(c['id'])
 
-    def cap_lines(netw, g_sub):
-        nodes = OrderedSet(x[0] for x in g_sub.nodes(data=True) if x[1]['comp']['type'] == 'Node')
-        lines = [x[0] for x in g_sub.nodes(data=True) if x[1]['comp']['type'] == 'Line']
-        adj_nodes = OrderedSet(e for x in lines for e in netw.graph.neighbors(x))
-        caps = sorted(adj_nodes - nodes)
-        assert len(caps) in (1, 2)
-        return (netw.graph.subgraph(lines + list(adj_nodes)), caps)
+        for c in merged[1:-1]:
+            netw.add_comp(c)
+        
+        for nd, elem in zip(merged[0:-1:2], merged[1::2]):
+            netw.connect(nd['id'], elem['id'], 0, {'phs': phs})
+        for nd, elem in zip(merged[2::2], merged[1::2]):
+            netw.connect(nd['id'], elem['id'], 1, {'phs': phs})
+        
+        merge_i += 1
 
-    def do_str(netw, g_sub, remove, new):
-        g_sub, caps = cap_lines(netw, g_sub)  # g_sub is unordered, caps are lexically ordered
-
-        if len(caps) <= 1:
-            # Special case: the string is circular.
-            to_remove = OrderedSet(g_sub.nodes) - caps
-            for x in to_remove:
-                remove.add(x)
-
-            return
-
-        # Order from one end to the other.
-        ordered = [g_sub.nodes[x]['comp'] for x in nx.dfs_preorder_nodes(g_sub, source=next(iter(caps)))]
-        do_str_ordered(netw, ordered, remove, new)
-
-    def do_str_ordered(netw, ordered, remove, new):
-        # ordered is [(id, type, dict)] for all nodes in the string including the two terminal nodes.
-        if len(ordered) < 5:
-            # We need at least 3 nodes and 2 lines to do any collapsing.
-            return
-
-        assert ordered[0]['type'] == 'Node'
-        assert ordered[-1]['type'] == 'Node'
-
-        # Loop over internal Nodes to check if all line to line connections are compatible.
-        # If not, do the pieces separately.
-        cons = list(netw.connections_between(ordered[0]['id'], ordered[1]['id']))
-        assert len(cons) == 1
-        con = (ordered[0]['id'], ordered[-1]['id'], cons[0].con)
-        for i_nd in range(2, len(ordered) - 1, 2):
-            l0 = ordered[i_nd - 1]
-            assert l0['type'] == 'Line'
-
-            l1 = ordered[i_nd + 1]
-            assert l1['type'] == 'Line'
-
-            ph0 = get_phasing(netw, l0)
-            ph1 = get_phasing(netw, l1)
-            if (ph0 is None or ph1 is None or ph0 != ph1):
-                # We need to do parts separately due to phasing mismatch at i_nd.
-                do_str_ordered(netw, ordered[:i_nd + 1], remove, new)
-                do_str_ordered(netw, ordered[i_nd:], remove, new)
-                return
-
-        repl_lines = ordered[1::2]
-
-        has_in_serv = any('in_service' in x for x in repl_lines)
-        in_serv = all(x['in_service'] if 'in_service' in x else True for x in repl_lines)
-
-        ls = np.array([x['length'] for x in repl_lines])
-        l_tot = sum(ls)
-        zs = np.array([a2c(x['z']) for x in repl_lines])
-        z0s = np.array([a2c(x['z0']) for x in repl_lines])
-        any_bs = any('b_chg' in x for x in repl_lines)
-        bs = np.array(
-            [a2c(x['b_chg']) if 'b_chg' in x else 0.0 + 0.0j for x in repl_lines]
-        ) if any_bs else None
-
-        new_line_dict = copy.deepcopy(repl_lines[0])
-        new_line_dict['length'] = l_tot
-        new_line_dict['z'] = c2a(sum(zs * ls) / l_tot)
-        new_line_dict['z0'] = c2a(sum(z0s * ls) / l_tot)
-        if any_bs:
-            new_line_dict['b_chg'] = c2a(sum(bs * ls)) / l_tot
-
-        if has_in_serv:
-            new_line_dict['in_service'] = in_serv
-
-        for x in ordered[1:-1]:
-            remove.add(x['id'])
-
-        def is_merged(ud):
-            return list(ud.keys()) == ['merged_user_data']
-
-        def ud_list(lid, ud):
-            return list(ud['merged_user_data'].items()) if is_merged(ud) else [(lid, ud)]
-
-        def merge_ud(lines):
-            return {'merged_user_data': dict(sum((ud_list(x['id'], user_data(x)) for x in lines), []))}
-
-        new_line_dict['user_data'] = merge_ud(repl_lines)
-
-        new.append((new_line_dict, con))
-
-    # Find all nodes that are only connected to 2 lines.
-    nodes = (x['id'] for x in netw.components(nodes_only=True))
-    nodes = (x for x in nodes if netw.graph.degree(x) == 2)
-    nodes = [x for x in nodes if all(netw.component(y)['type'] == 'Line' for y in netw.neighbors(x))]
-
-    # Extend to all connected lines. Note use of dict to preserve ordering (?)
-    lines = list(dict((l, None) for n in nodes for l in netw.graph.neighbors(n)).keys())
-
-    remove = OrderedSet()
-    new = []
-
-    graph_strs = netw.graph.subgraph(nodes + lines)  # Not order preserving
-    con_comps = sorted((sorted(x) for x in nx.connected_components(graph_strs)), key=lambda x: x[0])
-    # Sorting is to preserve determinism.
-    for con_comp in con_comps:
-        graph_str = graph_strs.subgraph(con_comp)
-        do_str(netw, graph_str, remove, new)
-
-    for x in remove:
-        netw.remove_component(x)
-
-    for c, con in new:
-        netw.add_comp(c)
-        netw.connect(c['id'], con[0], 0, con[2])
-        netw.connect(c['id'], con[1], 1, con[2])
-    
     return netw
 
 
