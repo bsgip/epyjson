@@ -179,7 +179,7 @@ def collapse_elem(netw: EJson, cid: str) -> EJson:
 
 
 def coalesce_connectors(
-        netw: EJson, coalesce_only_unswitched: bool = False, coalesce_only_not_two_phase: bool = False
+        netw: EJson, coalesce_switched: bool = True, coalesce_two_term: bool = True
 ) -> EJson:
     '''
     Coalesce switches and connectors - removing them where switches are open
@@ -188,18 +188,18 @@ def coalesce_connectors(
 
     Args:
         netw: eJson network
-        coalesce_only_unswitched: Only coalesce connectors that lack a switch
-        coalesce_only_not_two_phase: Only coalesce connectors with three or more phases
+        coalesce_switched: Whether to coalesce connectors that have a switch (default: True)
+        coalesce_two_term: Whether to coalesce "branch-like" connectors that have two terminals (default: True)
 
     Returns:
         in-place mutated network
     '''
 
     for comp in list(netw.components('Connector')):
-        if coalesce_only_unswitched and comp['switch_state'] != "no_switch":
+        if not coalesce_switched and 'switch_state' in comp and comp['switch_state'] != "no_switch":
             continue
 
-        if coalesce_only_not_two_phase and len(list(netw.connections_from(comp['id']))) == 2:
+        if not coalesce_two_term and len(list(netw.connections_from(comp['id']))) == 2:
             continue
 
         if is_live(comp):
