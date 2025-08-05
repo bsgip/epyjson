@@ -326,8 +326,8 @@ def merge_dups(netw: EJson) -> EJson:
 
         zs_merged = (1.0 / ys_merged) / min_length
 
-        l0['z'] = [zs_merged[0].real, zs_merged[0].imag]
-        l0['z0'] = [zs_merged[1].real, zs_merged[1].imag]
+        l0['z'] = c2a(zs_merged[0])
+        l0['z0'] = c2a(zs_merged[1])
         l0['length'] = min_length
 
     return netw
