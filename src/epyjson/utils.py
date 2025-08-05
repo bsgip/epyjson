@@ -120,9 +120,11 @@ def remove_hanging_nodes(netw: EJson) -> EJson:
         adj = list(netw.connections_from(comp['id']))
         if len(adj) == 1:
             comp_to = netw.component(adj[0].cid_1)
-            if comp_to['type'] == 'Line':
-                to_remove.append(comp['id'])
-                to_remove.append(comp_to['id'])
+            if comp_to['type'] in ('Line', 'Connector'):
+                if len(list(netw.connections_from(comp_to['id']))) <= 2:
+                    # Connectors could have any number of terminals.
+                    to_remove.append(comp['id'])
+                    to_remove.append(comp_to['id'])
 
     for cid in to_remove:
         netw.remove_component(cid)
