@@ -181,7 +181,7 @@ def collapse_elem(netw: EJson, cid: str) -> EJson:
 
 
 def coalesce_connectors(
-        netw: EJson, coalesce_switched: bool = True, coalesce_two_term: bool = True
+        netw: EJson, ignore: str = 'none'
 ) -> EJson:
     '''
     Coalesce switches and connectors - removing them where switches are open
@@ -190,18 +190,20 @@ def coalesce_connectors(
 
     Args:
         netw: eJson network
-        coalesce_switched: Whether to coalesce connectors that have a switch (default: True)
-        coalesce_two_term: Whether to coalesce "branch-like" connectors that have two terminals (default: True)
+        ignore: "none", "switched", "twoterm", "switched_twoterm"
 
     Returns:
         in-place mutated network
     '''
 
     for comp in list(netw.components('Connector')):
-        if not coalesce_switched and 'switch_state' in comp and comp['switch_state'] != "no_switch":
-            continue
-
-        if not coalesce_two_term and len(list(netw.connections_from(comp['id']))) == 2:
+        has_switch = 'switch_state' in comp and comp['switch_state'] != "no_switch"
+        is_twoterm = len(list(netw.connections_from(comp['id']))) == 2
+        if (
+            (ignore == 'switched' and has_switch) or
+            (ignore == 'twoterm' and is_twoterm) or
+            (ignore == 'switched_twoterm' and has_switch and is_twoterm)
+        ):
             continue
 
         if is_live(comp):
