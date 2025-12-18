@@ -1,16 +1,20 @@
 {
-    "$id": "http://bsgip.com/e-json",
+    "$id": "https://bsgip.com/e-json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "display_name": "e-JSON Schema",
     "type": "object",
+    "description": "JSON schema for the e-JSON data format that represents electrical networks",
     "properties": {
         "ejson_version": {
             "type": "string",
+            "description": "Version number in the form a.b.c. Versions start at 1.0; a increments at major breaking changes, b increments at minor breaking changes, and c increments for non-breaking changes",
             "pattern": "[0-9]+.[0-9]+.[0.9]+",
-            "description": "Version number in the form <a>.<b>.<c>. Versions start at 1.0; a increments at major breaking changes, b increments at minor breaking changes, and c increments for non-breaking changes",
             "examples": ["1.0.0"]
         },
         "voltage_type": {
             "type": "string",
             "description": "Voltage type, ll (line to line) or lg (line to ground)",
+            "enum": ["ll", "lg"],
             "examples": ["ll", "lg"]
         },
         "id": {
@@ -18,309 +22,338 @@
             "description": "optional network ID"
         },
         "user_data": {
-            "type": "object",
-            "description": "Non-e-json annotations",
-            "examples": [{"network_version": 7}]
+            "$ref": "#/$defs/user_data"
         },
         "components": {
             "type": "array",
             "description": "List of all network components (nodes and elements)",
             "items": {
-                "$ref": "#/definitions/component"
+                "$ref": "#/$defs/component"
             }
         }
     },
     "required": ["components"],
     "additionalProperties": false,
-    "definitions": {
-        "complexNumber": {
-            "@ref": "#/definitions/twoNumberArray",
-            "description": "Complex number, stored as [<real>, <imag>]",
-            "examples": [[4, 7]]
-        },
-        "positiveNumber": {
+    "$defs": {
+        "positive_number": {
             "type": "number",
+            "description": "A positive number",
             "minimum": 0
         },
-        "twoNumberArray": {
+        "two_number_array": {
             "type": "array",
+            "description": "An array containing two numbers",
             "items": {
                 "type": "number"
             },
             "minItems": 2,
             "maxItems": 2
         },
-        "twoPositiveNumberArray": {
+        "complex": {
+            "@ref": "#/$defs/two_number_array",
+            "description": "Complex number, stored as [<real>, <imag>]",
+            "examples": [[4, 7]]
+        },
+        "two_positive_number_array": {
             "type": "array",
+            "description": "An array containing two positive numbers",
             "items": {
-                "$ref": "#/definitions/positiveNumber"
+                "$ref": "#/$defs/positive_number"
             },
             "minItems": 2,
             "maxItems": 2
         },
-        "twoComplexNumberArray": {
+        "two_complex_number_array": {
             "type": "array",
+            "description": "An array containing two complex numbers",
             "items": {
-                "$ref": "#/definitions/complexNumber"
+                "$ref": "#/$defs/complex"
             },
             "minItems": 2,
-            "maxItems": 2
+            "maxItems": 2,
+            "examples": [[[1, 2.3], [2.0, 0.0]]]
         },
-        "complexArray": {
+        "complex_array": {
             "type": "array",
+            "description": "An array of complex numbers",
             "items": {
-                "$ref": "#/definitions/complexNumber"
-            }
-        },
-        "complexMatrix": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/complexArray"
+                "$ref": "#/$defs/complex"
             },
-            "description": "Row major complex matrix",
+            "examples": [[[1, 2.3], [2.0, 0.0], [0.0, -1.0]]]
+        },
+        "complex_matrix": {
+            "type": "array",
+            "description": "A matrix of complex numbers",
+            "items": {
+                "$ref": "#/$defs/complex_array"
+            },
             "examples": [
                 [
                     [[1, 0], [1, 1]],
                     [[0, 1], [1, 1]]
-                ]
+                ],
+                [[[1, 0]]]
             ]
+        },
+        "component_id": {
+            "type": "string",
+            "description": "The component's unique ID"
+        },
+        "user_data": {
+            "type": "object",
+            "description": "Non-e-json annotations"
         },
         "phs": {
             "type": "array",
+            "description": "A list of phases",
             "minItems": 1,
             "items": {
                 "type": "string"
             },
-            "description": "List of phases",
-            "examples": [["A", "B", "C"]]
+            "examples": [["A"], ["A", "B", "C"]]
         },
         "connection": {
             "type": "object",
+            "description": "A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected",
             "properties": {
                 "node": {
                     "type": "string"
                 },
                 "phs": {
-                    "$ref": "#/definitions/phs"
+                    "$ref": "#/$defs/phs"
                 }
             },
             "required": ["node", "phs"],
-            "description": "List of connections from element terminals. Each connection gives the node ID and phases to which the element is connected",
-            "examples": [[{"node": "node_1", "phs": ["A", "C"]}, {"node": "node_2", "phs": ["A", "C"]}]]
+            "examples": [[{"node": "node_1", "phs": ["A", "C"]}, {"node": "node_2", "phs": ["A", "B", "C"]}]]
         },
-        "oneConnection": {
+        "one_connection": {
             "type": "array",
+            "description": "A one element list of connections",
             "minItems": 1,
             "maxItems": 1,
             "items": {
-                "$ref": "#/definitions/connection"
-            }
+                "$ref": "#/$defs/connection"
+            },
+            "examples": [[{"node": "node_1", "phs": ["A", "C"]}]]
         },
-        "twoConnections": {
+        "two_connections": {
             "type": "array",
+            "description": "A two element list of connections",
             "minItems": 2,
             "maxItems": 2,
             "items": {
-                "$ref": "#/definitions/connection"
-            }
+                "$ref": "#/$defs/connection"
+            },
+            "examples": [[{"node": "node_1", "phs": ["A", "C"]}, {"node": "node_2", "phs": ["A", "B", "C"]}]]
         },
-        "twoOrMoreConnections": {
+        "two_or_more_connections": {
             "type": "array",
+            "description": "A list of connections with at least 2 elements",
             "minItems": 2,
             "items": {
-                "$ref": "#/definitions/connection"
-            }
+                "$ref": "#/$defs/connection"
+            },
+            "examples": [[{"node": "node_1", "phs": ["A", "C"]}, {"node": "node_2", "phs": ["A", "B", "C"]}]]
         },
-        "elementWiring": {
-            "description": "delta (LL) or wye (LG).",
+        "wiring": {
             "type": "string",
+            "description": "Specification of load or transformer wiring; delta (LL) or wye (LG)",
             "enum": ["delta", "wye"]
         },
-        "inService": {
-            "description": "If false, the component is out of service.",
-            "default": true,
-            "type": "boolean"
+        "in_service": {
+            "type": "boolean",
+            "description": "If false, the component is out of service",
+            "default": true
         },
         "component": {
+            "type": "object",
+            "description": "A component (Node/Infeeder/Gen/Load/Connector/Transformer)",
             "oneOf": [
                 {
-                    "$ref": "#/definitions/nodeComponent"
+                    "$ref": "#/$defs/Node"
                 },
                 {
-                    "$ref": "#/definitions/infeederComponent"
+                    "$ref": "#/$defs/Infeeder"
                 },
                 {
-                    "$ref": "#/definitions/genComponent"
+                    "$ref": "#/$defs/Gen"
                 },
                 {
-                    "$ref": "#/definitions/loadComponent"
+                    "$ref": "#/$defs/Load"
                 },
                 {
-                    "$ref": "#/definitions/lineComponent"
+                    "$ref": "#/$defs/Line"
                 },
                 {
-                    "$ref": "#/definitions/connectorComponent"
+                    "$ref": "#/$defs/Connector"
                 },
                 {
-                    "$ref": "#/definitions/transformerComponent"
+                    "$ref": "#/$defs/Transformer"
                 }
             ]
         },
-        "nodeComponent": {
+        "Node": {
             "type": "object",
+            "description": "A network node (bus)",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "$ref": "#/$defs/component_id"
                 },
                 "type": {
                     "const": "Node"
                 },
                 "phs": {
-                    "$ref": "#/definitions/phs"
+                    "$ref": "#/$defs/phs"
                 },
                 "user_data": {
-                    "type": "object"
+                    "$ref": "#/$defs/user_data"
                 },
                 "v": {
-                    "$ref": "#/definitions/complexArray"
+                    "$ref": "#/$defs/complex_array",
+                    "description": "The current voltage in V for each phase, line to line or line to ground according to global voltage_type"
                 },
                 "v_base": {
-                    "$ref": "#/definitions/positiveNumber"
+                    "$ref": "#/$defs/positive_number",
+                    "description": "The base voltage in V for the node, line to line or line to ground according to global voltage_type"
                 },
                 "lat_long": {
-                    "ref": "#/definitions/twoNumberArray"
+                    "ref": "#/$defs/two_number_array",
+                    "description": "[latitude, longitude]"
                 },
                 "xy": {
-                    "ref": "#/definitions/twoNumberArray"
+                    "ref": "#/$defs/two_number_array",
+                    "description": "Coordinates [x, y] e.g. for map datum"
                 }
             },
             "required": ["id", "type", "phs", "v_base"],
-            "additionalProperties": false,
-            "description": "Network node"
+            "additionalProperties": false
         },
-        "infeederComponent": {
+        "Infeeder": {
             "type": "object",
+            "description": "Network infeeder with constant voltage",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "$ref": "#/$defs/component_id"
                 },
                 "type": {
                     "const": "Infeeder"
                 },
                 "cons": {
-                    "$ref": "#/definitions/oneConnection"
+                    "$ref": "#/$defs/one_connection"
                 },
                 "user_data": {
-                    "type": "object"
+                    "$ref": "#/$defs/user_data"
                 },
-                "in_service": {"$ref": "#/definitions/inService"},
+                "in_service": {"$ref": "#/$defs/in_service"},
                 "v_setpoint": {
-                    "$ref": "#/definitions/positiveNumber",
-                    "description": "Line to ground voltage magnitude setpoint"
+                    "$ref": "#/$defs/positive_number",
+                    "description": "Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type"
                 },
                 "i_max": {
-                    "type": ["number", "null"]
+                    "type": ["number", "null"],
+                    "description": "maximum current per phase, in A"
                 }
             },
             "required": ["id", "type", "cons", "v_setpoint"],
-            "additionalProperties": false,
-            "description": "Network infeeder with constant voltage"
+            "additionalProperties": false
         },
-        "genComponent": {
+        "Gen": {
             "type": "object",
+            "description": "A generator, with optional voltage control",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "$ref": "#/$defs/component_id"
                 },
                 "type": {
                     "const": "Generator"
                 },
                 "cons": {
-                    "$ref": "#/definitions/oneConnection"
+                    "$ref": "#/$defs/one_connection"
                 },
                 "user_data": {
-                    "type": "object"
+                    "$ref": "#/$defs/user_data"
                 },
-                "in_service": {"$ref": "#/definitions/inService"},
+                "in_service": {"$ref": "#/$defs/in_service"},
                 "wiring": {
-                    "$ref": "#/definitions/elementWiring"
+                    "$ref": "#/$defs/wiring"
                 },
                 "p_min": {
-                    "description": "Minimum power injection (generation convention). ",
-                    "type": "number"
+                    "type": "number",
+                    "description": "Minimum real power injection in W, (generation convention). "
                 },
                 "p_max": {
-                    "description": "Maximum power injection (generation convention).",
-                    "default": 0,
-                    "type": "number"
+                    "type": "number",
+                    "description": "Maximum real power injection in W, (generation convention).",
+                    "default": 0
                 },
                 "q_min": {
-                    "description": "Minimum reactive power injection (generation convention). ",
-                    "type": "number"
+                    "type": "number",
+                    "description": "Minimum reactive power injection in VA (generation convention). "
                 },
                 "q_max": {
-                    "description": "Maximum reactive power injection (generation convention).",
-                    "default": 0,
-                    "type": "number"
+                    "type": "number",
+                    "description": "Maximum reactive power injection in VA (generation convention).",
+                    "default": 0
                 },
                 "cost": {
-                    "description": "Cost, in (cost unit) per (energy unit), e.g. $/kWh",
-                    "default": 0,
-                    "type": "number"
+                    "type": "number",
+                    "description": "Cost, in (cost unit) per Wh",
+                    "default": 0
                 },
                 "fixed_voltage": {
+                    "type": "boolean",
                     "description": "If true, the voltage magnitude is maintained at the setpoint.",
-                    "default": false,
-                    "type": "boolean"
+                    "default": false
                 },
                 "v_setpoint": {
-                    "description": "Voltage magnitude setpoint",
-                    "type": "number"
+                    "type": "number",
+                    "description": "Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type"
                 },
                 "is_reference": {
+                    "type": "boolean",
                     "description": "If true, the voltage angle is referenced to zero.",
-                    "default": false,
-                    "type": "boolean"
-                },
-                "description": "Generator with possibility of voltage control"
+                    "default": false
+                }
             },
             "required": ["id", "type", "cons", "wiring"]
         },
-        "loadComponent": {
+        "Load": {
+            "type": "object",
+            "description": "A load",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "$ref": "#/$defs/component_id"
                 },
                 "type": {
                     "const": "Load"
                 },
                 "cons": {
-                    "$ref": "#/definitions/oneConnection"
+                    "$ref": "#/$defs/one_connection"
                 },
                 "user_data": {
-                    "type": "object"
+                    "$ref": "#/$defs/user_data"
                 },
                 "wiring": {
-                    "$ref": "#/definitions/elementWiring"
+                    "$ref": "#/$defs/wiring"
                 },
                 "s": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/complexNumber"
+                        "$ref": "#/$defs/complex"
                     },
                     "minItems": 1
                 }
             },
             "required": ["id", "type", "cons"]
         },
-        "lineImpedanceZZ0": {
+        "line_impedance_z_z0": {
             "type": "object",
             "properties": {
                 "z": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "z0": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "b_chg": {
                     "type": "number"
@@ -328,30 +361,31 @@
             },
             "required": ["z", "z0"]
         },
-        "lineImpedanceYBus": {
+        "line_impedance_y_bus": {
             "properties": {
                 "y_bus": {
-                    "$ref": "#/definitions/complexMatrix"
+                    "$ref": "#/$defs/complex_matrix"
                 }
             },
             "required": ["y_bus"]
         },
-        "lineComponent": {
+        "Line": {
             "type": "object",
+            "description": "A line",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "$ref": "#/$defs/component_id"
                 },
                 "type": {
                     "const": "Line"
                 },
                 "cons": {
-                    "$ref": "#/definitions/twoConnections"
+                    "$ref": "#/$defs/two_connections"
                 },
                 "user_data": {
-                    "type": "object"
+                    "$ref": "#/$defs/user_data"
                 },
-                "in_service": {"$ref": "#/definitions/inService"},
+                "in_service": {"$ref": "#/$defs/in_service"},
                 "i_max": {
                     "type": ["number", "null"]
                 },
@@ -362,29 +396,30 @@
             "required": ["id", "type", "cons", "length"],
             "oneOf": [
                 {
-                    "$ref": "#/definitions/lineImpedanceZZ0"
+                    "$ref": "#/$defs/line_impedance_z_z0"
                 },
                 {
-                    "$ref": "#/definitions/lineImpedanceYBus"
+                    "$ref": "#/$defs/line_impedance_y_bus"
                 }
             ]
         },
-        "connectorComponent": {
+        "Connector": {
             "type": "object",
+            "description": "An optionally switchable zero impedance connection between terminals",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "$ref": "#/$defs/component_id"
                 },
                 "type": {
                     "const": "Connector"
                 },
                 "cons": {
-                    "$ref": "#/definitions/twoOrMoreConnections"
+                    "$ref": "#/$defs/two_or_more_connections"
                 },
                 "user_data": {
-                    "type": "object"
+                    "$ref": "#/$defs/user_data"
                 },
-                "in_service": {"$ref": "#/definitions/inService"},
+                "in_service": {"$ref": "#/$defs/in_service"},
                 "i_max": {
                     "type": ["number", "null"]
                 },
@@ -394,14 +429,14 @@
             },
             "required": ["id", "type", "cons"]
         },
-        "transformerTapChanger": {
-            "description": "Tap changer for a Transformer",
+        "TransformerTapChanger": {
             "type": "object",
+            "description": "Tap changer for a Transformer",
             "properties": {
 				"voltage_range": {
                     "type": "array",
                     "items": {
-						"$ref": "#/definitions/positiveNumber"
+						"$ref": "#/$defs/positive_number"
 					}
 				},
                 "indep_taps": {
@@ -427,7 +462,7 @@
 					"default": "auto"
                 },
                 "ldc_impedance": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "delay_seconds": {
                     "type": "number"
@@ -435,27 +470,28 @@
             },
             "required": ["voltage_range", "winding_side", "winding_idx"]
         },
-        "transformerComponent": {
+        "Transformer": {
             "type": "object",
+            "description": "A transformer",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "$ref": "#/$defs/component_id"
                 },
                 "type": {
                     "const": "Transformer"
                 },
                 "cons": {
-                    "$ref": "#/definitions/twoConnections"
+                    "$ref": "#/$defs/two_connections"
                 },
                 "user_data": {
-                    "type": "object"
+                    "$ref": "#/$defs/user_data"
                 },
-                "in_service": {"$ref": "#/definitions/inService"},
+                "in_service": {"$ref": "#/$defs/in_service"},
                 "vector_group": {
                     "type": "string"
                 },
                 "n_winding_pairs": {
-                    "$ref": "#/definitions/positiveNumber"
+                    "$ref": "#/$defs/positive_number"
                 },
                 "is_grounded_p": {
                     "type": "boolean"
@@ -464,28 +500,28 @@
                     "type": "boolean"
                 },
                 "nom_turns_ratio": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "v_winding_base": {
-                    "$ref": "#/definitions/twoPositiveNumberArray"
+                    "$ref": "#/$defs/two_positive_number_array"
                 },
                 "z_p": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "z_s": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "z0_p": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "z0_s": {
-                    "$ref": "#/definitions/complexNumber"
+                    "$ref": "#/$defs/complex"
                 },
                 "s_max": {
                     "type": "number"
                 },
                 "tap_range": {
-                    "$ref": "#/definitions/twoNumberArray"
+                    "$ref": "#/$defs/two_number_array"
                 },
                 "tap_factor": {
                     "type": "number"
@@ -494,7 +530,7 @@
                     "enum": ["primary", "secondary"]
                 },
                 "tap_changer": {
-                    "$ref": "#/definitions/transformerTapChanger"
+                    "$ref": "#/$defs/transformer_tap_changer"
                 },
                 "taps": {
                     "type": "array",
