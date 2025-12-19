@@ -1,30 +1,35 @@
 {
     "$id": "https://bsgip.com/e-json",
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "display_name": "e-JSON Schema",
+    "title": "e-JSON schema",
     "type": "object",
     "description": "JSON schema for the e-JSON data format that represents electrical networks",
     "properties": {
         "ejson_version": {
+            "title": "e-JSON Version",
             "type": "string",
             "description": "Version number in the form a.b.c. Versions start at 1.0; a increments at major breaking changes, b increments at minor breaking changes, and c increments for non-breaking changes",
             "pattern": "[0-9]+.[0-9]+.[0.9]+",
             "examples": ["1.0.0"]
         },
         "id": {
+            "title": "Network ID",
             "type": "string",
             "description": "Network ID"
         },
         "user_data": {
+            "title": "User Data",
             "$ref": "#/$defs/user_data"
         },
         "voltage_type": {
+            "title": "Voltage Type",
             "type": "string",
             "description": "Voltage type, ll (line to line) or lg (line to ground)",
             "enum": ["ll", "lg"],
             "examples": ["ll", "lg"]
         },
         "components": {
+            "title": "Component List",
             "type": "array",
             "description": "List of all network components (nodes and elements)",
             "items": {
@@ -96,14 +101,17 @@
             ]
         },
         "component_id": {
+            "title": "Component ID",
             "type": "string",
             "description": "The component's unique ID"
         },
         "user_data": {
+            "title": "User Data",
             "type": "object",
             "description": "Non-e-json annotations"
         },
         "phs": {
+            "title": "List of Phases",
             "type": "array",
             "description": "A list of phases",
             "minItems": 1,
@@ -113,6 +121,7 @@
             "examples": [["A"], ["A", "B", "C"]]
         },
         "connection": {
+            "title": "Connection",
             "type": "object",
             "description": "A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected",
             "properties": {
@@ -127,6 +136,7 @@
             "examples": [[{"node": "node_1", "phs": ["A", "C"]}, {"node": "node_2", "phs": ["A", "B", "C"]}]]
         },
         "one_connection": {
+            "title": "Single Connection",
             "type": "array",
             "description": "A one element list of connections",
             "minItems": 1,
@@ -137,6 +147,7 @@
             "examples": [[{"node": "node_1", "phs": ["A", "C"]}]]
         },
         "two_connections": {
+            "title": "Two Connections",
             "type": "array",
             "description": "A two element list of connections",
             "minItems": 2,
@@ -147,6 +158,7 @@
             "examples": [[{"node": "node_1", "phs": ["A", "C"]}, {"node": "node_2", "phs": ["A", "B", "C"]}]]
         },
         "two_or_more_connections": {
+            "title": "Two or More Connections",
             "type": "array",
             "description": "A list of connections with at least 2 elements",
             "minItems": 2,
@@ -155,17 +167,29 @@
             },
             "examples": [[{"node": "node_1", "phs": ["A", "C"]}, {"node": "node_2", "phs": ["A", "B", "C"]}]]
         },
-        "wiring": {
-            "type": "string",
-            "description": "Specification of load or transformer wiring; delta (LL) or wye (LG)",
-            "enum": ["delta", "wye"]
+        "element_type": {
+            "title": "Element Type",
+            "description": "Element Type"
         },
         "in_service": {
+            "title": "In Service Indicator",
             "type": "boolean",
             "description": "If false, the component is out of service",
             "default": true
         },
+        "wiring": {
+            "title": "Element Wiring",
+            "type": "string",
+            "description": "Specification of load or transformer wiring; delta (LL) or wye (LG)",
+            "enum": ["delta", "wye"]
+        },
+        "i_max": {
+            "title": "Maximum Current per Phase / Conductor",
+            "type": ["number", "null"],
+            "description": "maximum current per phase or conductor, in A"
+        },
         "component": {
+            "title": "e-JSON Component",
             "type": "object",
             "description": "A component (Node/Infeeder/Gen/Load/Connector/Transformer)",
             "oneOf": [
@@ -193,6 +217,7 @@
             ]
         },
         "Node": {
+            "title": "Node Component",
             "type": "object",
             "description": "A network node (bus)",
             "properties": {
@@ -200,6 +225,7 @@
                     "$ref": "#/$defs/component_id"
                 },
                 "type": {
+                    "$ref": "#/$defs/element_type",
                     "const": "Node"
                 },
                 "phs": {
@@ -210,18 +236,22 @@
                 },
                 "v": {
                     "$ref": "#/$defs/complex_array",
+                    "title": "Node Voltage",
                     "description": "The current voltage in V for each phase, line to line or line to ground according to global voltage_type"
                 },
                 "v_base": {
                     "$ref": "#/$defs/positive_number",
+                    "title": "Node Base Voltage",
                     "description": "The base voltage in V for the node, line to line or line to ground according to global voltage_type"
                 },
                 "lat_long": {
                     "ref": "#/$defs/two_number_array",
+                    "title": "Node Lat/Long",
                     "description": "[latitude, longitude]"
                 },
                 "xy": {
                     "ref": "#/$defs/two_number_array",
+                    "title": "Node Coordinates",
                     "description": "Coordinates [x, y] e.g. for map datum"
                 }
             },
@@ -229,6 +259,7 @@
             "additionalProperties": false
         },
         "Infeeder": {
+            "title": "Infeeder Component",
             "type": "object",
             "description": "Network infeeder with constant voltage",
             "properties": {
@@ -236,6 +267,7 @@
                     "$ref": "#/$defs/component_id"
                 },
                 "type": {
+                    "$ref": "#/$defs/element_type",
                     "const": "Infeeder"
                 },
                 "cons": {
@@ -244,20 +276,23 @@
                 "user_data": {
                     "$ref": "#/$defs/user_data"
                 },
-                "in_service": {"$ref": "#/$defs/in_service"},
+                "in_service": {
+                    "$ref": "#/$defs/in_service"
+                },
                 "v_setpoint": {
+                    "title": "Voltage Setpoint",
                     "$ref": "#/$defs/positive_number",
                     "description": "Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type"
                 },
                 "i_max": {
-                    "type": ["number", "null"],
-                    "description": "maximum current per phase, in A"
+                    "$ref": "#/$defs/i_max"
                 }
             },
             "required": ["id", "type", "cons", "v_setpoint"],
             "additionalProperties": false
         },
         "Gen": {
+            "title": "Generator Component",
             "type": "object",
             "description": "A generator, with optional voltage control",
             "properties": {
@@ -265,6 +300,7 @@
                     "$ref": "#/$defs/component_id"
                 },
                 "type": {
+                    "$ref": "#/$defs/element_type",
                     "const": "Generator"
                 },
                 "cons": {
@@ -273,43 +309,53 @@
                 "user_data": {
                     "$ref": "#/$defs/user_data"
                 },
-                "in_service": {"$ref": "#/$defs/in_service"},
+                "in_service": {
+                    "$ref": "#/$defs/in_service"
+                },
                 "wiring": {
                     "$ref": "#/$defs/wiring"
                 },
                 "p_min": {
+                    "title": "Minimum Real Power",
                     "type": "number",
                     "description": "Minimum real power injection in W, (generation convention). "
                 },
                 "p_max": {
+                    "title": "Maximum Real Power",
                     "type": "number",
                     "description": "Maximum real power injection in W, (generation convention).",
                     "default": 0
                 },
                 "q_min": {
+                    "title": "Minimum Reactive Power",
                     "type": "number",
                     "description": "Minimum reactive power injection in VA (generation convention). "
                 },
                 "q_max": {
+                    "title": "Maximum Reactive Power",
                     "type": "number",
                     "description": "Maximum reactive power injection in VA (generation convention).",
                     "default": 0
                 },
                 "cost": {
+                    "title": "Cost per Wh",
                     "type": "number",
                     "description": "Cost, in (cost unit) per Wh",
                     "default": 0
                 },
                 "fixed_voltage": {
+                    "title": "Voltage Control",
                     "type": "boolean",
                     "description": "If true, the voltage magnitude is maintained at the setpoint.",
                     "default": false
                 },
                 "v_setpoint": {
+                    "title": "Voltage Setpoint",
                     "type": "number",
                     "description": "Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type"
                 },
                 "is_reference": {
+                    "title": "Angle Reference Indicator",
                     "type": "boolean",
                     "description": "If true, the voltage angle is referenced to zero.",
                     "default": false
@@ -318,6 +364,7 @@
             "required": ["id", "type", "cons", "wiring"]
         },
         "Load": {
+            "title": "Load Component",
             "type": "object",
             "description": "A load",
             "properties": {
@@ -325,6 +372,7 @@
                     "$ref": "#/$defs/component_id"
                 },
                 "type": {
+                    "$ref": "#/$defs/element_type",
                     "const": "Load"
                 },
                 "cons": {
@@ -337,7 +385,9 @@
                     "$ref": "#/$defs/wiring"
                 },
                 "s": {
+                    "title": "Load Nominal or Present Power Consumption",
                     "type": "array",
+                    "description": "Complex power consumption, can represent present or nominal consumption",
                     "items": {
                         "$ref": "#/$defs/complex_number"
                     },
@@ -347,7 +397,9 @@
             "required": ["id", "type", "cons"]
         },
         "line_impedance_z_z0": {
+            "title": "Line Impedance per Length as Sequence Components",
             "type": "object",
+            "description": "Line impedance as positive and zero sequence Ohms per length unit. Negative sequence is assumed to be same as positive",
             "properties": {
                 "z": {
                     "$ref": "#/$defs/complex_number"
@@ -362,6 +414,9 @@
             "required": ["z", "z0"]
         },
         "line_impedance_y_bus": {
+            "title": "Line Impedance per length unit as Bus Admittance Matrix",
+            "type": "object",
+            "description": "Line impedance expressed as a bus/nodal admittance matrix, in Ohms per length unit",
             "properties": {
                 "y_bus": {
                     "$ref": "#/$defs/complex_matrix"
@@ -370,6 +425,7 @@
             "required": ["y_bus"]
         },
         "Line": {
+            "title": "Line Component",
             "type": "object",
             "description": "A line",
             "properties": {
@@ -377,6 +433,7 @@
                     "$ref": "#/$defs/component_id"
                 },
                 "type": {
+                    "$ref": "#/$defs/element_type",
                     "const": "Line"
                 },
                 "cons": {
@@ -387,9 +444,10 @@
                 },
                 "in_service": {"$ref": "#/$defs/in_service"},
                 "i_max": {
-                    "type": ["number", "null"]
+                    "$ref": "#/$defs/i_max"
                 },
                 "length": {
+                    "description": "Line length",
                     "type": "number"
                 }
             },
@@ -404,6 +462,7 @@
             ]
         },
         "Connector": {
+            "title": "Connector Component",
             "type": "object",
             "description": "An optionally switchable zero impedance connection between terminals",
             "properties": {
@@ -411,6 +470,7 @@
                     "$ref": "#/$defs/component_id"
                 },
                 "type": {
+                    "$ref": "#/$defs/element_type",
                     "const": "Connector"
                 },
                 "cons": {
@@ -421,7 +481,7 @@
                 },
                 "in_service": {"$ref": "#/$defs/in_service"},
                 "i_max": {
-                    "type": ["number", "null"]
+                    "$ref": "#/$defs/i_max"
                 },
                 "switch_state": {
                     "enum": ["closed", "open", "no_switch"]
@@ -471,6 +531,7 @@
             "required": ["voltage_range", "winding_side", "winding_idx"]
         },
         "Transformer": {
+            "title": "Transformer Component",
             "type": "object",
             "description": "A transformer",
             "properties": {
@@ -478,6 +539,7 @@
                     "$ref": "#/$defs/component_id"
                 },
                 "type": {
+                    "$ref": "#/$defs/element_type",
                     "const": "Transformer"
                 },
                 "cons": {
@@ -518,22 +580,34 @@
                     "$ref": "#/$defs/complex_number"
                 },
                 "s_max": {
-                    "type": "number"
+                    "title": "Maximum Apparent Power",
+                    "type": "number",
+                    "description": "Maximum apparent power, in VA"
                 },
                 "tap_range": {
-                    "$ref": "#/$defs/two_number_array"
+                    "title": "Tap Range",
+                    "$ref": "#/$defs/two_number_array",
+                    "description": "Tap range, [min_tap, max_tap]"
                 },
                 "tap_factor": {
-                    "type": "number"
+                    "title": "Tap Factor",
+                    "type": "number",
+                    "description": "tap_factor x nom_turns_ratio is added to the turns ratio every time the tap increases by 1"
                 },
                 "tap_side": {
-                    "enum": ["primary", "secondary"]
+                    "title": "Tap Side",
+                    "enum": ["primary", "secondary"],
+                    "description": "Are taps on the primary or secondary side?"
                 },
                 "tap_changer": {
-                    "$ref": "#/$defs/tap_changer"
+                    "title": "Tap Changer for Transformer",
+                    "$ref": "#/$defs/tap_changer",
+                    "description": "Specification of a transformer's tap changer, if present"
                 },
                 "taps": {
+                    "title": "Tap Settings for Each Winding",
                     "type": "array",
+                    "description": "Tap settings, one per winding pair",
                     "items": {
                         "type": "number"
                     }

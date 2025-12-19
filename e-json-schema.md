@@ -1,4 +1,6 @@
-# Schema Docs
+# e-JSON schema
+
+**Title:** e-JSON schema
 
 |                           |             |
 | ------------------------- | ----------- |
@@ -8,15 +10,17 @@
 
 **Description:** JSON schema for the e-JSON data format that represents electrical networks
 
-| Property                           | Pattern | Type             | Deprecated | Definition           | Title/Description                                                                                                                                                                  |
-| ---------------------------------- | ------- | ---------------- | ---------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| - [ejson_version](#ejson_version ) | No      | string           | No         | -                    | Version number in the form a.b.c. Versions start at 1.0; a increments at major breaking changes, b increments at minor breaking changes, and c increments for non-breaking changes |
-| - [id](#id )                       | No      | string           | No         | -                    | Network ID                                                                                                                                                                         |
-| - [user_data](#user_data )         | No      | object           | No         | In #/$defs/user_data | Non-e-json annotations                                                                                                                                                             |
-| + [voltage_type](#voltage_type )   | No      | enum (of string) | No         | -                    | Voltage type, ll (line to line) or lg (line to ground)                                                                                                                             |
-| + [components](#components )       | No      | array            | No         | -                    | List of all network components (nodes and elements)                                                                                                                                |
+| Property                           | Pattern | Type             | Deprecated | Definition           | Title/Description |
+| ---------------------------------- | ------- | ---------------- | ---------- | -------------------- | ----------------- |
+| - [ejson_version](#ejson_version ) | No      | string           | No         | -                    | e-JSON Version    |
+| - [id](#id )                       | No      | string           | No         | -                    | Network ID        |
+| - [user_data](#user_data )         | No      | object           | No         | In #/$defs/user_data | User Data         |
+| + [voltage_type](#voltage_type )   | No      | enum (of string) | No         | -                    | Voltage Type      |
+| + [components](#components )       | No      | array            | No         | -                    | Component List    |
 
-## <a name="ejson_version"></a>1. Property `root > ejson_version`
+## <a name="ejson_version"></a>1. Property `e-JSON schema > ejson_version`
+
+**Title:** e-JSON Version
 
 |              |          |
 | ------------ | -------- |
@@ -35,7 +39,9 @@
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | **Must match regular expression** | ```[0-9]+.[0-9]+.[0.9]+``` [Test](https://regex101.com/?regex=%5B0-9%5D%2B.%5B0-9%5D%2B.%5B0.9%5D%2B&testString=%221.0.0%22) |
 
-## <a name="id"></a>2. Property `root > id`
+## <a name="id"></a>2. Property `e-JSON schema > id`
+
+**Title:** Network ID
 
 |              |          |
 | ------------ | -------- |
@@ -44,7 +50,9 @@
 
 **Description:** Network ID
 
-## <a name="user_data"></a>3. Property `root > user_data`
+## <a name="user_data"></a>3. Property `e-JSON schema > user_data`
+
+**Title:** User Data
 
 |                           |                   |
 | ------------------------- | ----------------- |
@@ -55,7 +63,9 @@
 
 **Description:** Non-e-json annotations
 
-## <a name="voltage_type"></a>4. Property `root > voltage_type`
+## <a name="voltage_type"></a>4. Property `e-JSON schema > voltage_type`
+
+**Title:** Voltage Type
 
 |              |                    |
 | ------------ | ------------------ |
@@ -78,7 +88,9 @@ Must be one of:
 * "ll"
 * "lg"
 
-## <a name="components"></a>5. Property `root > components`
+## <a name="components"></a>5. Property `e-JSON schema > components`
+
+**Title:** Component List
 
 |              |         |
 | ------------ | ------- |
@@ -95,11 +107,13 @@ Must be one of:
 | **Additional items** | False              |
 | **Tuple validation** | See below          |
 
-| Each item of this array must be | Description                                                |
-| ------------------------------- | ---------------------------------------------------------- |
-| [component](#components_items)  | A component (Node/Infeeder/Gen/Load/Connector/Transformer) |
+| Each item of this array must be       | Description                                                |
+| ------------------------------------- | ---------------------------------------------------------- |
+| [e-JSON Component](#components_items) | A component (Node/Infeeder/Gen/Load/Connector/Transformer) |
 
-### <a name="components_items"></a>5.1. root > components > component
+### <a name="components_items"></a>5.1. e-JSON schema > components > e-JSON Component
+
+**Title:** e-JSON Component
 
 |                           |                   |
 | ------------------------- | ----------------- |
@@ -110,17 +124,19 @@ Must be one of:
 
 **Description:** A component (Node/Infeeder/Gen/Load/Connector/Transformer)
 
-| One of(Option)                            |
-| ----------------------------------------- |
-| [Node](#components_items_oneOf_i0)        |
-| [Infeeder](#components_items_oneOf_i1)    |
-| [Gen](#components_items_oneOf_i2)         |
-| [Load](#components_items_oneOf_i3)        |
-| [Line](#components_items_oneOf_i4)        |
-| [Connector](#components_items_oneOf_i5)   |
-| [Transformer](#components_items_oneOf_i6) |
+| One of(Option)                                      |
+| --------------------------------------------------- |
+| [Node Component](#components_items_oneOf_i0)        |
+| [Infeeder Component](#components_items_oneOf_i1)    |
+| [Generator Component](#components_items_oneOf_i2)   |
+| [Load Component](#components_items_oneOf_i3)        |
+| [Line Component](#components_items_oneOf_i4)        |
+| [Connector Component](#components_items_oneOf_i5)   |
+| [Transformer Component](#components_items_oneOf_i6) |
 
-#### <a name="components_items_oneOf_i0"></a>5.1.1. Property `root > components > components items > oneOf > Node`
+#### <a name="components_items_oneOf_i0"></a>5.1.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component`
+
+**Title:** Node Component
 
 |                           |              |
 | ------------------------- | ------------ |
@@ -131,18 +147,20 @@ Must be one of:
 
 **Description:** A network node (bus)
 
-| Property                                             | Pattern | Type            | Deprecated | Definition                       | Title/Description                                                                                        |
-| ---------------------------------------------------- | ------- | --------------- | ---------- | -------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| + [id](#components_items_oneOf_i0_id )               | No      | string          | No         | In #/$defs/component_id          | The component's unique ID                                                                                |
-| + [type](#components_items_oneOf_i0_type )           | No      | const           | No         | -                                | -                                                                                                        |
-| + [phs](#components_items_oneOf_i0_phs )             | No      | array of string | No         | In #/$defs/phs                   | A list of phases                                                                                         |
-| - [user_data](#components_items_oneOf_i0_user_data ) | No      | object          | No         | Same as [user_data](#user_data ) | Non-e-json annotations                                                                                   |
-| - [v](#components_items_oneOf_i0_v )                 | No      | array           | No         | In #/$defs/complex_array         | The current voltage in V for each phase, line to line or line to ground according to global voltage_type |
-| + [v_base](#components_items_oneOf_i0_v_base )       | No      | number          | No         | In #/$defs/positive_number       | The base voltage in V for the node, line to line or line to ground according to global voltage_type      |
-| - [lat_long](#components_items_oneOf_i0_lat_long )   | No      | object          | No         | -                                | [latitude, longitude]                                                                                    |
-| - [xy](#components_items_oneOf_i0_xy )               | No      | object          | No         | -                                | Coordinates [x, y] e.g. for map datum                                                                    |
+| Property                                             | Pattern | Type            | Deprecated | Definition                       | Title/Description |
+| ---------------------------------------------------- | ------- | --------------- | ---------- | -------------------------------- | ----------------- |
+| + [id](#components_items_oneOf_i0_id )               | No      | string          | No         | In #/$defs/component_id          | Component ID      |
+| + [type](#components_items_oneOf_i0_type )           | No      | const           | No         | In #/$defs/element_type          | Element Type      |
+| + [phs](#components_items_oneOf_i0_phs )             | No      | array of string | No         | In #/$defs/phs                   | List of Phases    |
+| - [user_data](#components_items_oneOf_i0_user_data ) | No      | object          | No         | Same as [user_data](#user_data ) | User Data         |
+| - [v](#components_items_oneOf_i0_v )                 | No      | array           | No         | In #/$defs/complex_array         | Node Voltage      |
+| + [v_base](#components_items_oneOf_i0_v_base )       | No      | number          | No         | In #/$defs/positive_number       | Node Base Voltage |
+| - [lat_long](#components_items_oneOf_i0_lat_long )   | No      | object          | No         | -                                | Node Lat/Long     |
+| - [xy](#components_items_oneOf_i0_xy )               | No      | object          | No         | -                                | Node Coordinates  |
 
-##### <a name="components_items_oneOf_i0_id"></a>5.1.1.1. Property `root > components > components items > oneOf > item 0 > id`
+##### <a name="components_items_oneOf_i0_id"></a>5.1.1.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > id`
+
+**Title:** Component ID
 
 |                |                      |
 | -------------- | -------------------- |
@@ -152,16 +170,21 @@ Must be one of:
 
 **Description:** The component's unique ID
 
-##### <a name="components_items_oneOf_i0_type"></a>5.1.1.2. Property `root > components > components items > oneOf > item 0 > type`
+##### <a name="components_items_oneOf_i0_type"></a>5.1.1.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > type`
 
-|              |         |
-| ------------ | ------- |
-| **Type**     | `const` |
-| **Required** | Yes     |
+**Title:** Element Type
 
-Specific value: `"Node"`
+|                |                      |
+| -------------- | -------------------- |
+| **Type**       | `const`              |
+| **Required**   | Yes                  |
+| **Defined in** | #/$defs/element_type |
 
-##### <a name="components_items_oneOf_i0_phs"></a>5.1.1.3. Property `root > components > components items > oneOf > item 0 > phs`
+**Description:** Element Type
+
+##### <a name="components_items_oneOf_i0_phs"></a>5.1.1.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > phs`
+
+**Title:** List of Phases
 
 |                |                   |
 | -------------- | ----------------- |
@@ -199,14 +222,16 @@ Specific value: `"Node"`
 | ------------------------------------------------- | ----------- |
 | [phs items](#components_items_oneOf_i0_phs_items) | -           |
 
-###### <a name="components_items_oneOf_i0_phs_items"></a>5.1.1.3.1. root > components > components items > oneOf > item 0 > phs > phs items
+###### <a name="components_items_oneOf_i0_phs_items"></a>5.1.1.3.1. e-JSON schema > components > e-JSON Component > oneOf > Node Component > phs > phs items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="components_items_oneOf_i0_user_data"></a>5.1.1.4. Property `root > components > components items > oneOf > item 0 > user_data`
+##### <a name="components_items_oneOf_i0_user_data"></a>5.1.1.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > user_data`
+
+**Title:** User Data
 
 |                           |                         |
 | ------------------------- | ----------------------- |
@@ -217,7 +242,9 @@ Specific value: `"Node"`
 
 **Description:** Non-e-json annotations
 
-##### <a name="components_items_oneOf_i0_v"></a>5.1.1.5. Property `root > components > components items > oneOf > item 0 > v`
+##### <a name="components_items_oneOf_i0_v"></a>5.1.1.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > v`
+
+**Title:** Node Voltage
 
 |                |                       |
 | -------------- | --------------------- |
@@ -258,7 +285,7 @@ Specific value: `"Node"`
 | ---------------------------------------------------- | ------------------------------------------ |
 | [complex_number](#components_items_oneOf_i0_v_items) | Complex number, stored as [<real>, <imag>] |
 
-###### <a name="components_items_oneOf_i0_v_items"></a>5.1.1.5.1. root > components > components items > oneOf > item 0 > v > complex_number
+###### <a name="components_items_oneOf_i0_v_items"></a>5.1.1.5.1. e-JSON schema > components > e-JSON Component > oneOf > Node Component > v > complex_number
 
 |                           |                        |
 | ------------------------- | ---------------------- |
@@ -278,7 +305,9 @@ Specific value: `"Node"`
 ]
 ```
 
-##### <a name="components_items_oneOf_i0_v_base"></a>5.1.1.6. Property `root > components > components items > oneOf > item 0 > v_base`
+##### <a name="components_items_oneOf_i0_v_base"></a>5.1.1.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > v_base`
+
+**Title:** Node Base Voltage
 
 |                |                         |
 | -------------- | ----------------------- |
@@ -292,7 +321,9 @@ Specific value: `"Node"`
 | ------------ | ------ |
 | **Minimum**  | &ge; 0 |
 
-##### <a name="components_items_oneOf_i0_lat_long"></a>5.1.1.7. Property `root > components > components items > oneOf > item 0 > lat_long`
+##### <a name="components_items_oneOf_i0_lat_long"></a>5.1.1.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > lat_long`
+
+**Title:** Node Lat/Long
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -302,7 +333,9 @@ Specific value: `"Node"`
 
 **Description:** [latitude, longitude]
 
-##### <a name="components_items_oneOf_i0_xy"></a>5.1.1.8. Property `root > components > components items > oneOf > item 0 > xy`
+##### <a name="components_items_oneOf_i0_xy"></a>5.1.1.8. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > xy`
+
+**Title:** Node Coordinates
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -312,7 +345,9 @@ Specific value: `"Node"`
 
 **Description:** Coordinates [x, y] e.g. for map datum
 
-#### <a name="components_items_oneOf_i1"></a>5.1.2. Property `root > components > components items > oneOf > Infeeder`
+#### <a name="components_items_oneOf_i1"></a>5.1.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component`
+
+**Title:** Infeeder Component
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -323,17 +358,19 @@ Specific value: `"Node"`
 
 **Description:** Network infeeder with constant voltage
 
-| Property                                               | Pattern | Type           | Deprecated | Definition                                           | Title/Description                                                                                |
-| ------------------------------------------------------ | ------- | -------------- | ---------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| + [id](#components_items_oneOf_i1_id )                 | No      | string         | No         | Same as [id](#components_items_oneOf_i0_id )         | The component's unique ID                                                                        |
-| + [type](#components_items_oneOf_i1_type )             | No      | const          | No         | -                                                    | -                                                                                                |
-| + [cons](#components_items_oneOf_i1_cons )             | No      | array          | No         | In #/$defs/one_connection                            | A one element list of connections                                                                |
-| - [user_data](#components_items_oneOf_i1_user_data )   | No      | object         | No         | Same as [user_data](#user_data )                     | Non-e-json annotations                                                                           |
-| - [in_service](#components_items_oneOf_i1_in_service ) | No      | boolean        | No         | In #/$defs/in_service                                | If false, the component is out of service                                                        |
-| + [v_setpoint](#components_items_oneOf_i1_v_setpoint ) | No      | number         | No         | Same as [v_base](#components_items_oneOf_i0_v_base ) | Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type |
-| - [i_max](#components_items_oneOf_i1_i_max )           | No      | number or null | No         | -                                                    | maximum current per phase, in A                                                                  |
+| Property                                               | Pattern | Type           | Deprecated | Definition                                       | Title/Description                     |
+| ------------------------------------------------------ | ------- | -------------- | ---------- | ------------------------------------------------ | ------------------------------------- |
+| + [id](#components_items_oneOf_i1_id )                 | No      | string         | No         | Same as [id](#components_items_oneOf_i0_id )     | Component ID                          |
+| + [type](#components_items_oneOf_i1_type )             | No      | const          | No         | Same as [type](#components_items_oneOf_i0_type ) | Element Type                          |
+| + [cons](#components_items_oneOf_i1_cons )             | No      | array          | No         | In #/$defs/one_connection                        | Single Connection                     |
+| - [user_data](#components_items_oneOf_i1_user_data )   | No      | object         | No         | Same as [user_data](#user_data )                 | User Data                             |
+| - [in_service](#components_items_oneOf_i1_in_service ) | No      | boolean        | No         | In #/$defs/in_service                            | In Service Indicator                  |
+| + [v_setpoint](#components_items_oneOf_i1_v_setpoint ) | No      | number         | No         | In #/$defs/positive_number                       | Voltage Setpoint                      |
+| - [i_max](#components_items_oneOf_i1_i_max )           | No      | number or null | No         | In #/$defs/i_max                                 | Maximum Current per Phase / Conductor |
 
-##### <a name="components_items_oneOf_i1_id"></a>5.1.2.1. Property `root > components > components items > oneOf > item 1 > id`
+##### <a name="components_items_oneOf_i1_id"></a>5.1.2.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > id`
+
+**Title:** Component ID
 
 |                        |                                     |
 | ---------------------- | ----------------------------------- |
@@ -343,16 +380,21 @@ Specific value: `"Node"`
 
 **Description:** The component's unique ID
 
-##### <a name="components_items_oneOf_i1_type"></a>5.1.2.2. Property `root > components > components items > oneOf > item 1 > type`
+##### <a name="components_items_oneOf_i1_type"></a>5.1.2.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > type`
 
-|              |         |
-| ------------ | ------- |
-| **Type**     | `const` |
-| **Required** | Yes     |
+**Title:** Element Type
 
-Specific value: `"Infeeder"`
+|                        |                                         |
+| ---------------------- | --------------------------------------- |
+| **Type**               | `const`                                 |
+| **Required**           | Yes                                     |
+| **Same definition as** | [type](#components_items_oneOf_i0_type) |
 
-##### <a name="components_items_oneOf_i1_cons"></a>5.1.2.3. Property `root > components > components items > oneOf > item 1 > cons`
+**Description:** Element Type
+
+##### <a name="components_items_oneOf_i1_cons"></a>5.1.2.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > cons`
+
+**Title:** Single Connection
 
 |                |                        |
 | -------------- | ---------------------- |
@@ -386,9 +428,11 @@ Specific value: `"Infeeder"`
 
 | Each item of this array must be                     | Description                                                                                                                  |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [connection](#components_items_oneOf_i1_cons_items) | A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected |
+| [Connection](#components_items_oneOf_i1_cons_items) | A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected |
 
-###### <a name="components_items_oneOf_i1_cons_items"></a>5.1.2.3.1. root > components > components items > oneOf > item 1 > cons > connection
+###### <a name="components_items_oneOf_i1_cons_items"></a>5.1.2.3.1. e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > cons > Connection
+
+**Title:** Connection
 
 |                           |                    |
 | ------------------------- | ------------------ |
@@ -424,16 +468,18 @@ Specific value: `"Infeeder"`
 | Property                                              | Pattern | Type            | Deprecated | Definition                                     | Title/Description |
 | ----------------------------------------------------- | ------- | --------------- | ---------- | ---------------------------------------------- | ----------------- |
 | + [node](#components_items_oneOf_i1_cons_items_node ) | No      | string          | No         | -                                              | -                 |
-| + [phs](#components_items_oneOf_i1_cons_items_phs )   | No      | array of string | No         | Same as [phs](#components_items_oneOf_i0_phs ) | A list of phases  |
+| + [phs](#components_items_oneOf_i1_cons_items_phs )   | No      | array of string | No         | Same as [phs](#components_items_oneOf_i0_phs ) | List of Phases    |
 
-###### <a name="components_items_oneOf_i1_cons_items_node"></a>5.1.2.3.1.1. Property `root > components > components items > oneOf > item 1 > cons > cons items > node`
+###### <a name="components_items_oneOf_i1_cons_items_node"></a>5.1.2.3.1.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > cons > Connection > node`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | Yes      |
 
-###### <a name="components_items_oneOf_i1_cons_items_phs"></a>5.1.2.3.1.2. Property `root > components > components items > oneOf > item 1 > cons > cons items > phs`
+###### <a name="components_items_oneOf_i1_cons_items_phs"></a>5.1.2.3.1.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > cons > Connection > phs`
+
+**Title:** List of Phases
 
 |                        |                                       |
 | ---------------------- | ------------------------------------- |
@@ -443,7 +489,9 @@ Specific value: `"Infeeder"`
 
 **Description:** A list of phases
 
-##### <a name="components_items_oneOf_i1_user_data"></a>5.1.2.4. Property `root > components > components items > oneOf > item 1 > user_data`
+##### <a name="components_items_oneOf_i1_user_data"></a>5.1.2.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > user_data`
+
+**Title:** User Data
 
 |                           |                         |
 | ------------------------- | ----------------------- |
@@ -454,7 +502,9 @@ Specific value: `"Infeeder"`
 
 **Description:** Non-e-json annotations
 
-##### <a name="components_items_oneOf_i1_in_service"></a>5.1.2.5. Property `root > components > components items > oneOf > item 1 > in_service`
+##### <a name="components_items_oneOf_i1_in_service"></a>5.1.2.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > in_service`
+
+**Title:** In Service Indicator
 
 |                |                    |
 | -------------- | ------------------ |
@@ -465,26 +515,37 @@ Specific value: `"Infeeder"`
 
 **Description:** If false, the component is out of service
 
-##### <a name="components_items_oneOf_i1_v_setpoint"></a>5.1.2.6. Property `root > components > components items > oneOf > item 1 > v_setpoint`
+##### <a name="components_items_oneOf_i1_v_setpoint"></a>5.1.2.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > v_setpoint`
 
-|                        |                                             |
-| ---------------------- | ------------------------------------------- |
-| **Type**               | `number`                                    |
-| **Required**           | Yes                                         |
-| **Same definition as** | [v_base](#components_items_oneOf_i0_v_base) |
+**Title:** Voltage Setpoint
+
+|                |                         |
+| -------------- | ----------------------- |
+| **Type**       | `number`                |
+| **Required**   | Yes                     |
+| **Defined in** | #/$defs/positive_number |
 
 **Description:** Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type
 
-##### <a name="components_items_oneOf_i1_i_max"></a>5.1.2.7. Property `root > components > components items > oneOf > item 1 > i_max`
+| Restrictions |        |
+| ------------ | ------ |
+| **Minimum**  | &ge; 0 |
 
-|              |                  |
-| ------------ | ---------------- |
-| **Type**     | `number or null` |
-| **Required** | No               |
+##### <a name="components_items_oneOf_i1_i_max"></a>5.1.2.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Infeeder Component > i_max`
 
-**Description:** maximum current per phase, in A
+**Title:** Maximum Current per Phase / Conductor
 
-#### <a name="components_items_oneOf_i2"></a>5.1.3. Property `root > components > components items > oneOf > Gen`
+|                |                  |
+| -------------- | ---------------- |
+| **Type**       | `number or null` |
+| **Required**   | No               |
+| **Defined in** | #/$defs/i_max    |
+
+**Description:** maximum current per phase or conductor, in A
+
+#### <a name="components_items_oneOf_i2"></a>5.1.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component`
+
+**Title:** Generator Component
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -495,24 +556,26 @@ Specific value: `"Infeeder"`
 
 **Description:** A generator, with optional voltage control
 
-| Property                                                     | Pattern | Type             | Deprecated | Definition                                                   | Title/Description                                                                                |
-| ------------------------------------------------------------ | ------- | ---------------- | ---------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| + [id](#components_items_oneOf_i2_id )                       | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                 | The component's unique ID                                                                        |
-| + [type](#components_items_oneOf_i2_type )                   | No      | const            | No         | -                                                            | -                                                                                                |
-| + [cons](#components_items_oneOf_i2_cons )                   | No      | array            | No         | Same as [cons](#components_items_oneOf_i1_cons )             | A one element list of connections                                                                |
-| - [user_data](#components_items_oneOf_i2_user_data )         | No      | object           | No         | Same as [user_data](#user_data )                             | Non-e-json annotations                                                                           |
-| - [in_service](#components_items_oneOf_i2_in_service )       | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service ) | If false, the component is out of service                                                        |
-| + [wiring](#components_items_oneOf_i2_wiring )               | No      | enum (of string) | No         | In #/$defs/wiring                                            | Specification of load or transformer wiring; delta (LL) or wye (LG)                              |
-| - [p_min](#components_items_oneOf_i2_p_min )                 | No      | number           | No         | -                                                            | Minimum real power injection in W, (generation convention).                                      |
-| - [p_max](#components_items_oneOf_i2_p_max )                 | No      | number           | No         | -                                                            | Maximum real power injection in W, (generation convention).                                      |
-| - [q_min](#components_items_oneOf_i2_q_min )                 | No      | number           | No         | -                                                            | Minimum reactive power injection in VA (generation convention).                                  |
-| - [q_max](#components_items_oneOf_i2_q_max )                 | No      | number           | No         | -                                                            | Maximum reactive power injection in VA (generation convention).                                  |
-| - [cost](#components_items_oneOf_i2_cost )                   | No      | number           | No         | -                                                            | Cost, in (cost unit) per Wh                                                                      |
-| - [fixed_voltage](#components_items_oneOf_i2_fixed_voltage ) | No      | boolean          | No         | -                                                            | If true, the voltage magnitude is maintained at the setpoint.                                    |
-| - [v_setpoint](#components_items_oneOf_i2_v_setpoint )       | No      | number           | No         | -                                                            | Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type |
-| - [is_reference](#components_items_oneOf_i2_is_reference )   | No      | boolean          | No         | -                                                            | If true, the voltage angle is referenced to zero.                                                |
+| Property                                                     | Pattern | Type             | Deprecated | Definition                                                   | Title/Description         |
+| ------------------------------------------------------------ | ------- | ---------------- | ---------- | ------------------------------------------------------------ | ------------------------- |
+| + [id](#components_items_oneOf_i2_id )                       | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                 | Component ID              |
+| + [type](#components_items_oneOf_i2_type )                   | No      | const            | No         | Same as [type](#components_items_oneOf_i0_type )             | Element Type              |
+| + [cons](#components_items_oneOf_i2_cons )                   | No      | array            | No         | Same as [cons](#components_items_oneOf_i1_cons )             | Single Connection         |
+| - [user_data](#components_items_oneOf_i2_user_data )         | No      | object           | No         | Same as [user_data](#user_data )                             | User Data                 |
+| - [in_service](#components_items_oneOf_i2_in_service )       | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service ) | In Service Indicator      |
+| + [wiring](#components_items_oneOf_i2_wiring )               | No      | enum (of string) | No         | In #/$defs/wiring                                            | Element Wiring            |
+| - [p_min](#components_items_oneOf_i2_p_min )                 | No      | number           | No         | -                                                            | Minimum Real Power        |
+| - [p_max](#components_items_oneOf_i2_p_max )                 | No      | number           | No         | -                                                            | Maximum Real Power        |
+| - [q_min](#components_items_oneOf_i2_q_min )                 | No      | number           | No         | -                                                            | Minimum Reactive Power    |
+| - [q_max](#components_items_oneOf_i2_q_max )                 | No      | number           | No         | -                                                            | Maximum Reactive Power    |
+| - [cost](#components_items_oneOf_i2_cost )                   | No      | number           | No         | -                                                            | Cost per Wh               |
+| - [fixed_voltage](#components_items_oneOf_i2_fixed_voltage ) | No      | boolean          | No         | -                                                            | Voltage Control           |
+| - [v_setpoint](#components_items_oneOf_i2_v_setpoint )       | No      | number           | No         | -                                                            | Voltage Setpoint          |
+| - [is_reference](#components_items_oneOf_i2_is_reference )   | No      | boolean          | No         | -                                                            | Angle Reference Indicator |
 
-##### <a name="components_items_oneOf_i2_id"></a>5.1.3.1. Property `root > components > components items > oneOf > item 2 > id`
+##### <a name="components_items_oneOf_i2_id"></a>5.1.3.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > id`
+
+**Title:** Component ID
 
 |                        |                                     |
 | ---------------------- | ----------------------------------- |
@@ -522,16 +585,21 @@ Specific value: `"Infeeder"`
 
 **Description:** The component's unique ID
 
-##### <a name="components_items_oneOf_i2_type"></a>5.1.3.2. Property `root > components > components items > oneOf > item 2 > type`
+##### <a name="components_items_oneOf_i2_type"></a>5.1.3.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > type`
 
-|              |         |
-| ------------ | ------- |
-| **Type**     | `const` |
-| **Required** | Yes     |
+**Title:** Element Type
 
-Specific value: `"Generator"`
+|                        |                                         |
+| ---------------------- | --------------------------------------- |
+| **Type**               | `const`                                 |
+| **Required**           | Yes                                     |
+| **Same definition as** | [type](#components_items_oneOf_i0_type) |
 
-##### <a name="components_items_oneOf_i2_cons"></a>5.1.3.3. Property `root > components > components items > oneOf > item 2 > cons`
+**Description:** Element Type
+
+##### <a name="components_items_oneOf_i2_cons"></a>5.1.3.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > cons`
+
+**Title:** Single Connection
 
 |                        |                                         |
 | ---------------------- | --------------------------------------- |
@@ -541,7 +609,9 @@ Specific value: `"Generator"`
 
 **Description:** A one element list of connections
 
-##### <a name="components_items_oneOf_i2_user_data"></a>5.1.3.4. Property `root > components > components items > oneOf > item 2 > user_data`
+##### <a name="components_items_oneOf_i2_user_data"></a>5.1.3.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > user_data`
+
+**Title:** User Data
 
 |                           |                         |
 | ------------------------- | ----------------------- |
@@ -552,7 +622,9 @@ Specific value: `"Generator"`
 
 **Description:** Non-e-json annotations
 
-##### <a name="components_items_oneOf_i2_in_service"></a>5.1.3.5. Property `root > components > components items > oneOf > item 2 > in_service`
+##### <a name="components_items_oneOf_i2_in_service"></a>5.1.3.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > in_service`
+
+**Title:** In Service Indicator
 
 |                        |                                                     |
 | ---------------------- | --------------------------------------------------- |
@@ -563,7 +635,9 @@ Specific value: `"Generator"`
 
 **Description:** If false, the component is out of service
 
-##### <a name="components_items_oneOf_i2_wiring"></a>5.1.3.6. Property `root > components > components items > oneOf > item 2 > wiring`
+##### <a name="components_items_oneOf_i2_wiring"></a>5.1.3.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > wiring`
+
+**Title:** Element Wiring
 
 |                |                    |
 | -------------- | ------------------ |
@@ -577,7 +651,9 @@ Must be one of:
 * "delta"
 * "wye"
 
-##### <a name="components_items_oneOf_i2_p_min"></a>5.1.3.7. Property `root > components > components items > oneOf > item 2 > p_min`
+##### <a name="components_items_oneOf_i2_p_min"></a>5.1.3.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > p_min`
+
+**Title:** Minimum Real Power
 
 |              |          |
 | ------------ | -------- |
@@ -586,7 +662,9 @@ Must be one of:
 
 **Description:** Minimum real power injection in W, (generation convention). 
 
-##### <a name="components_items_oneOf_i2_p_max"></a>5.1.3.8. Property `root > components > components items > oneOf > item 2 > p_max`
+##### <a name="components_items_oneOf_i2_p_max"></a>5.1.3.8. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > p_max`
+
+**Title:** Maximum Real Power
 
 |              |          |
 | ------------ | -------- |
@@ -596,7 +674,9 @@ Must be one of:
 
 **Description:** Maximum real power injection in W, (generation convention).
 
-##### <a name="components_items_oneOf_i2_q_min"></a>5.1.3.9. Property `root > components > components items > oneOf > item 2 > q_min`
+##### <a name="components_items_oneOf_i2_q_min"></a>5.1.3.9. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > q_min`
+
+**Title:** Minimum Reactive Power
 
 |              |          |
 | ------------ | -------- |
@@ -605,7 +685,9 @@ Must be one of:
 
 **Description:** Minimum reactive power injection in VA (generation convention). 
 
-##### <a name="components_items_oneOf_i2_q_max"></a>5.1.3.10. Property `root > components > components items > oneOf > item 2 > q_max`
+##### <a name="components_items_oneOf_i2_q_max"></a>5.1.3.10. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > q_max`
+
+**Title:** Maximum Reactive Power
 
 |              |          |
 | ------------ | -------- |
@@ -615,7 +697,9 @@ Must be one of:
 
 **Description:** Maximum reactive power injection in VA (generation convention).
 
-##### <a name="components_items_oneOf_i2_cost"></a>5.1.3.11. Property `root > components > components items > oneOf > item 2 > cost`
+##### <a name="components_items_oneOf_i2_cost"></a>5.1.3.11. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > cost`
+
+**Title:** Cost per Wh
 
 |              |          |
 | ------------ | -------- |
@@ -625,7 +709,9 @@ Must be one of:
 
 **Description:** Cost, in (cost unit) per Wh
 
-##### <a name="components_items_oneOf_i2_fixed_voltage"></a>5.1.3.12. Property `root > components > components items > oneOf > item 2 > fixed_voltage`
+##### <a name="components_items_oneOf_i2_fixed_voltage"></a>5.1.3.12. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > fixed_voltage`
+
+**Title:** Voltage Control
 
 |              |           |
 | ------------ | --------- |
@@ -635,7 +721,9 @@ Must be one of:
 
 **Description:** If true, the voltage magnitude is maintained at the setpoint.
 
-##### <a name="components_items_oneOf_i2_v_setpoint"></a>5.1.3.13. Property `root > components > components items > oneOf > item 2 > v_setpoint`
+##### <a name="components_items_oneOf_i2_v_setpoint"></a>5.1.3.13. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > v_setpoint`
+
+**Title:** Voltage Setpoint
 
 |              |          |
 | ------------ | -------- |
@@ -644,7 +732,9 @@ Must be one of:
 
 **Description:** Voltage magnitude setpoint in V, line to line or line to ground according to global voltage_type
 
-##### <a name="components_items_oneOf_i2_is_reference"></a>5.1.3.14. Property `root > components > components items > oneOf > item 2 > is_reference`
+##### <a name="components_items_oneOf_i2_is_reference"></a>5.1.3.14. Property `e-JSON schema > components > e-JSON Component > oneOf > Generator Component > is_reference`
+
+**Title:** Angle Reference Indicator
 
 |              |           |
 | ------------ | --------- |
@@ -654,7 +744,9 @@ Must be one of:
 
 **Description:** If true, the voltage angle is referenced to zero.
 
-#### <a name="components_items_oneOf_i3"></a>5.1.4. Property `root > components > components items > oneOf > Load`
+#### <a name="components_items_oneOf_i3"></a>5.1.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component`
+
+**Title:** Load Component
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -665,16 +757,18 @@ Must be one of:
 
 **Description:** A load
 
-| Property                                             | Pattern | Type             | Deprecated | Definition                                           | Title/Description                                                   |
-| ---------------------------------------------------- | ------- | ---------------- | ---------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
-| + [id](#components_items_oneOf_i3_id )               | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )         | The component's unique ID                                           |
-| + [type](#components_items_oneOf_i3_type )           | No      | const            | No         | -                                                    | -                                                                   |
-| + [cons](#components_items_oneOf_i3_cons )           | No      | array            | No         | Same as [cons](#components_items_oneOf_i1_cons )     | A one element list of connections                                   |
-| - [user_data](#components_items_oneOf_i3_user_data ) | No      | object           | No         | Same as [user_data](#user_data )                     | Non-e-json annotations                                              |
-| - [wiring](#components_items_oneOf_i3_wiring )       | No      | enum (of string) | No         | Same as [wiring](#components_items_oneOf_i2_wiring ) | Specification of load or transformer wiring; delta (LL) or wye (LG) |
-| - [s](#components_items_oneOf_i3_s )                 | No      | array            | No         | -                                                    | -                                                                   |
+| Property                                             | Pattern | Type             | Deprecated | Definition                                           | Title/Description                         |
+| ---------------------------------------------------- | ------- | ---------------- | ---------- | ---------------------------------------------------- | ----------------------------------------- |
+| + [id](#components_items_oneOf_i3_id )               | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )         | Component ID                              |
+| + [type](#components_items_oneOf_i3_type )           | No      | const            | No         | Same as [type](#components_items_oneOf_i0_type )     | Element Type                              |
+| + [cons](#components_items_oneOf_i3_cons )           | No      | array            | No         | Same as [cons](#components_items_oneOf_i1_cons )     | Single Connection                         |
+| - [user_data](#components_items_oneOf_i3_user_data ) | No      | object           | No         | Same as [user_data](#user_data )                     | User Data                                 |
+| - [wiring](#components_items_oneOf_i3_wiring )       | No      | enum (of string) | No         | Same as [wiring](#components_items_oneOf_i2_wiring ) | Element Wiring                            |
+| - [s](#components_items_oneOf_i3_s )                 | No      | array            | No         | -                                                    | Load Nominal or Present Power Consumption |
 
-##### <a name="components_items_oneOf_i3_id"></a>5.1.4.1. Property `root > components > components items > oneOf > item 3 > id`
+##### <a name="components_items_oneOf_i3_id"></a>5.1.4.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component > id`
+
+**Title:** Component ID
 
 |                        |                                     |
 | ---------------------- | ----------------------------------- |
@@ -684,16 +778,21 @@ Must be one of:
 
 **Description:** The component's unique ID
 
-##### <a name="components_items_oneOf_i3_type"></a>5.1.4.2. Property `root > components > components items > oneOf > item 3 > type`
+##### <a name="components_items_oneOf_i3_type"></a>5.1.4.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component > type`
 
-|              |         |
-| ------------ | ------- |
-| **Type**     | `const` |
-| **Required** | Yes     |
+**Title:** Element Type
 
-Specific value: `"Load"`
+|                        |                                         |
+| ---------------------- | --------------------------------------- |
+| **Type**               | `const`                                 |
+| **Required**           | Yes                                     |
+| **Same definition as** | [type](#components_items_oneOf_i0_type) |
 
-##### <a name="components_items_oneOf_i3_cons"></a>5.1.4.3. Property `root > components > components items > oneOf > item 3 > cons`
+**Description:** Element Type
+
+##### <a name="components_items_oneOf_i3_cons"></a>5.1.4.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component > cons`
+
+**Title:** Single Connection
 
 |                        |                                         |
 | ---------------------- | --------------------------------------- |
@@ -703,7 +802,9 @@ Specific value: `"Load"`
 
 **Description:** A one element list of connections
 
-##### <a name="components_items_oneOf_i3_user_data"></a>5.1.4.4. Property `root > components > components items > oneOf > item 3 > user_data`
+##### <a name="components_items_oneOf_i3_user_data"></a>5.1.4.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component > user_data`
+
+**Title:** User Data
 
 |                           |                         |
 | ------------------------- | ----------------------- |
@@ -714,7 +815,9 @@ Specific value: `"Load"`
 
 **Description:** Non-e-json annotations
 
-##### <a name="components_items_oneOf_i3_wiring"></a>5.1.4.5. Property `root > components > components items > oneOf > item 3 > wiring`
+##### <a name="components_items_oneOf_i3_wiring"></a>5.1.4.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component > wiring`
+
+**Title:** Element Wiring
 
 |                        |                                             |
 | ---------------------- | ------------------------------------------- |
@@ -724,12 +827,16 @@ Specific value: `"Load"`
 
 **Description:** Specification of load or transformer wiring; delta (LL) or wye (LG)
 
-##### <a name="components_items_oneOf_i3_s"></a>5.1.4.6. Property `root > components > components items > oneOf > item 3 > s`
+##### <a name="components_items_oneOf_i3_s"></a>5.1.4.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component > s`
+
+**Title:** Load Nominal or Present Power Consumption
 
 |              |         |
 | ------------ | ------- |
 | **Type**     | `array` |
 | **Required** | No      |
+
+**Description:** Complex power consumption, can represent present or nominal consumption
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -743,7 +850,7 @@ Specific value: `"Load"`
 | ---------------------------------------------------- | ------------------------------------------ |
 | [complex_number](#components_items_oneOf_i3_s_items) | Complex number, stored as [<real>, <imag>] |
 
-###### <a name="components_items_oneOf_i3_s_items"></a>5.1.4.6.1. root > components > components items > oneOf > item 3 > s > complex_number
+###### <a name="components_items_oneOf_i3_s_items"></a>5.1.4.6.1. e-JSON schema > components > e-JSON Component > oneOf > Load Component > s > complex_number
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -754,7 +861,9 @@ Specific value: `"Load"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-#### <a name="components_items_oneOf_i4"></a>5.1.5. Property `root > components > components items > oneOf > Line`
+#### <a name="components_items_oneOf_i4"></a>5.1.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component`
+
+**Title:** Line Component
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -765,22 +874,24 @@ Specific value: `"Load"`
 
 **Description:** A line
 
-| Property                                               | Pattern | Type           | Deprecated | Definition                                                   | Title/Description                         |
-| ------------------------------------------------------ | ------- | -------------- | ---------- | ------------------------------------------------------------ | ----------------------------------------- |
-| + [id](#components_items_oneOf_i4_id )                 | No      | string         | No         | Same as [id](#components_items_oneOf_i0_id )                 | The component's unique ID                 |
-| + [type](#components_items_oneOf_i4_type )             | No      | const          | No         | -                                                            | -                                         |
-| + [cons](#components_items_oneOf_i4_cons )             | No      | array          | No         | In #/$defs/two_connections                                   | A two element list of connections         |
-| - [user_data](#components_items_oneOf_i4_user_data )   | No      | object         | No         | Same as [user_data](#user_data )                             | Non-e-json annotations                    |
-| - [in_service](#components_items_oneOf_i4_in_service ) | No      | boolean        | No         | Same as [in_service](#components_items_oneOf_i1_in_service ) | If false, the component is out of service |
-| - [i_max](#components_items_oneOf_i4_i_max )           | No      | number or null | No         | -                                                            | -                                         |
-| + [length](#components_items_oneOf_i4_length )         | No      | number         | No         | -                                                            | -                                         |
+| Property                                               | Pattern | Type           | Deprecated | Definition                                                   | Title/Description                     |
+| ------------------------------------------------------ | ------- | -------------- | ---------- | ------------------------------------------------------------ | ------------------------------------- |
+| + [id](#components_items_oneOf_i4_id )                 | No      | string         | No         | Same as [id](#components_items_oneOf_i0_id )                 | Component ID                          |
+| + [type](#components_items_oneOf_i4_type )             | No      | const          | No         | Same as [type](#components_items_oneOf_i0_type )             | Element Type                          |
+| + [cons](#components_items_oneOf_i4_cons )             | No      | array          | No         | In #/$defs/two_connections                                   | Two Connections                       |
+| - [user_data](#components_items_oneOf_i4_user_data )   | No      | object         | No         | Same as [user_data](#user_data )                             | User Data                             |
+| - [in_service](#components_items_oneOf_i4_in_service ) | No      | boolean        | No         | Same as [in_service](#components_items_oneOf_i1_in_service ) | In Service Indicator                  |
+| - [i_max](#components_items_oneOf_i4_i_max )           | No      | number or null | No         | Same as [i_max](#components_items_oneOf_i1_i_max )           | Maximum Current per Phase / Conductor |
+| + [length](#components_items_oneOf_i4_length )         | No      | number         | No         | -                                                            | Line length                           |
 
-| One of(Option)                                              |
-| ----------------------------------------------------------- |
-| [line_impedance_z_z0](#components_items_oneOf_i4_oneOf_i0)  |
-| [line_impedance_y_bus](#components_items_oneOf_i4_oneOf_i1) |
+| One of(Option)                                                                                 |
+| ---------------------------------------------------------------------------------------------- |
+| [Line Impedance per Length as Sequence Components](#components_items_oneOf_i4_oneOf_i0)        |
+| [Line Impedance per length unit as Bus Admittance Matrix](#components_items_oneOf_i4_oneOf_i1) |
 
-##### <a name="components_items_oneOf_i4_oneOf_i0"></a>5.1.5.1. Property `root > components > components items > oneOf > item 4 > oneOf > line_impedance_z_z0`
+##### <a name="components_items_oneOf_i4_oneOf_i0"></a>5.1.5.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per Length as Sequence Components`
+
+**Title:** Line Impedance per Length as Sequence Components
 
 |                           |                             |
 | ------------------------- | --------------------------- |
@@ -789,13 +900,15 @@ Specific value: `"Load"`
 | **Additional properties** | Any type allowed            |
 | **Defined in**            | #/$defs/line_impedance_z_z0 |
 
+**Description:** Line impedance as positive and zero sequence Ohms per length unit. Negative sequence is assumed to be same as positive
+
 | Property                                              | Pattern | Type   | Deprecated | Definition                                                                       | Title/Description                          |
 | ----------------------------------------------------- | ------- | ------ | ---------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
 | + [z](#components_items_oneOf_i4_oneOf_i0_z )         | No      | object | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
 | + [z0](#components_items_oneOf_i4_oneOf_i0_z0 )       | No      | object | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
 | - [b_chg](#components_items_oneOf_i4_oneOf_i0_b_chg ) | No      | number | No         | -                                                                                | -                                          |
 
-###### <a name="components_items_oneOf_i4_oneOf_i0_z"></a>5.1.5.1.1. Property `root > components > components items > oneOf > item 4 > oneOf > item 0 > z`
+###### <a name="components_items_oneOf_i4_oneOf_i0_z"></a>5.1.5.1.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per Length as Sequence Components > z`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -806,7 +919,7 @@ Specific value: `"Load"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-###### <a name="components_items_oneOf_i4_oneOf_i0_z0"></a>5.1.5.1.2. Property `root > components > components items > oneOf > item 4 > oneOf > item 0 > z0`
+###### <a name="components_items_oneOf_i4_oneOf_i0_z0"></a>5.1.5.1.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per Length as Sequence Components > z0`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -817,14 +930,16 @@ Specific value: `"Load"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-###### <a name="components_items_oneOf_i4_oneOf_i0_b_chg"></a>5.1.5.1.3. Property `root > components > components items > oneOf > item 4 > oneOf > item 0 > b_chg`
+###### <a name="components_items_oneOf_i4_oneOf_i0_b_chg"></a>5.1.5.1.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per Length as Sequence Components > b_chg`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="components_items_oneOf_i4_oneOf_i1"></a>5.1.5.2. Property `root > components > components items > oneOf > item 4 > oneOf > line_impedance_y_bus`
+##### <a name="components_items_oneOf_i4_oneOf_i1"></a>5.1.5.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per length unit as Bus Admittance Matrix`
+
+**Title:** Line Impedance per length unit as Bus Admittance Matrix
 
 |                           |                              |
 | ------------------------- | ---------------------------- |
@@ -833,11 +948,13 @@ Specific value: `"Load"`
 | **Additional properties** | Any type allowed             |
 | **Defined in**            | #/$defs/line_impedance_y_bus |
 
+**Description:** Line impedance expressed as a bus/nodal admittance matrix, in Ohms per length unit
+
 | Property                                              | Pattern | Type  | Deprecated | Definition                | Title/Description           |
 | ----------------------------------------------------- | ------- | ----- | ---------- | ------------------------- | --------------------------- |
 | + [y_bus](#components_items_oneOf_i4_oneOf_i1_y_bus ) | No      | array | No         | In #/$defs/complex_matrix | A matrix of complex numbers |
 
-###### <a name="components_items_oneOf_i4_oneOf_i1_y_bus"></a>5.1.5.2.1. Property `root > components > components items > oneOf > item 4 > oneOf > item 1 > y_bus`
+###### <a name="components_items_oneOf_i4_oneOf_i1_y_bus"></a>5.1.5.2.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per length unit as Bus Admittance Matrix > y_bus`
 
 |                |                        |
 | -------------- | ---------------------- |
@@ -897,7 +1014,7 @@ Specific value: `"Load"`
 | ---------------------------------------------------------------- | --------------------------- |
 | [complex_array](#components_items_oneOf_i4_oneOf_i1_y_bus_items) | An array of complex numbers |
 
-###### <a name="components_items_oneOf_i4_oneOf_i1_y_bus_items"></a>5.1.5.2.1.1. root > components > components items > oneOf > item 4 > oneOf > item 1 > y_bus > complex_array
+###### <a name="components_items_oneOf_i4_oneOf_i1_y_bus_items"></a>5.1.5.2.1.1. e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per length unit as Bus Admittance Matrix > y_bus > complex_array
 
 |                        |                                   |
 | ---------------------- | --------------------------------- |
@@ -907,7 +1024,9 @@ Specific value: `"Load"`
 
 **Description:** An array of complex numbers
 
-##### <a name="components_items_oneOf_i4_id"></a>5.1.5.3. Property `root > components > components items > oneOf > item 4 > id`
+##### <a name="components_items_oneOf_i4_id"></a>5.1.5.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > id`
+
+**Title:** Component ID
 
 |                        |                                     |
 | ---------------------- | ----------------------------------- |
@@ -917,16 +1036,21 @@ Specific value: `"Load"`
 
 **Description:** The component's unique ID
 
-##### <a name="components_items_oneOf_i4_type"></a>5.1.5.4. Property `root > components > components items > oneOf > item 4 > type`
+##### <a name="components_items_oneOf_i4_type"></a>5.1.5.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > type`
 
-|              |         |
-| ------------ | ------- |
-| **Type**     | `const` |
-| **Required** | Yes     |
+**Title:** Element Type
 
-Specific value: `"Line"`
+|                        |                                         |
+| ---------------------- | --------------------------------------- |
+| **Type**               | `const`                                 |
+| **Required**           | Yes                                     |
+| **Same definition as** | [type](#components_items_oneOf_i0_type) |
 
-##### <a name="components_items_oneOf_i4_cons"></a>5.1.5.5. Property `root > components > components items > oneOf > item 4 > cons`
+**Description:** Element Type
+
+##### <a name="components_items_oneOf_i4_cons"></a>5.1.5.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > cons`
+
+**Title:** Two Connections
 
 |                |                         |
 | -------------- | ----------------------- |
@@ -968,20 +1092,24 @@ Specific value: `"Line"`
 
 | Each item of this array must be                     | Description                                                                                                                  |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [connection](#components_items_oneOf_i4_cons_items) | A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected |
+| [Connection](#components_items_oneOf_i4_cons_items) | A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected |
 
-###### <a name="components_items_oneOf_i4_cons_items"></a>5.1.5.5.1. root > components > components items > oneOf > item 4 > cons > connection
+###### <a name="components_items_oneOf_i4_cons_items"></a>5.1.5.5.1. e-JSON schema > components > e-JSON Component > oneOf > Line Component > cons > Connection
 
-|                           |                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                      |
-| **Required**              | No                                                                            |
-| **Additional properties** | Any type allowed                                                              |
-| **Same definition as**    | [components_items_oneOf_i1_cons_items](#components_items_oneOf_i1_cons_items) |
+**Title:** Connection
+
+|                           |                                                     |
+| ------------------------- | --------------------------------------------------- |
+| **Type**                  | `object`                                            |
+| **Required**              | No                                                  |
+| **Additional properties** | Any type allowed                                    |
+| **Same definition as**    | [Connection](#components_items_oneOf_i1_cons_items) |
 
 **Description:** A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected
 
-##### <a name="components_items_oneOf_i4_user_data"></a>5.1.5.6. Property `root > components > components items > oneOf > item 4 > user_data`
+##### <a name="components_items_oneOf_i4_user_data"></a>5.1.5.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > user_data`
+
+**Title:** User Data
 
 |                           |                         |
 | ------------------------- | ----------------------- |
@@ -992,7 +1120,9 @@ Specific value: `"Line"`
 
 **Description:** Non-e-json annotations
 
-##### <a name="components_items_oneOf_i4_in_service"></a>5.1.5.7. Property `root > components > components items > oneOf > item 4 > in_service`
+##### <a name="components_items_oneOf_i4_in_service"></a>5.1.5.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > in_service`
+
+**Title:** In Service Indicator
 
 |                        |                                                     |
 | ---------------------- | --------------------------------------------------- |
@@ -1003,21 +1133,30 @@ Specific value: `"Line"`
 
 **Description:** If false, the component is out of service
 
-##### <a name="components_items_oneOf_i4_i_max"></a>5.1.5.8. Property `root > components > components items > oneOf > item 4 > i_max`
+##### <a name="components_items_oneOf_i4_i_max"></a>5.1.5.8. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > i_max`
 
-|              |                  |
-| ------------ | ---------------- |
-| **Type**     | `number or null` |
-| **Required** | No               |
+**Title:** Maximum Current per Phase / Conductor
 
-##### <a name="components_items_oneOf_i4_length"></a>5.1.5.9. Property `root > components > components items > oneOf > item 4 > length`
+|                        |                                           |
+| ---------------------- | ----------------------------------------- |
+| **Type**               | `number or null`                          |
+| **Required**           | No                                        |
+| **Same definition as** | [i_max](#components_items_oneOf_i1_i_max) |
+
+**Description:** maximum current per phase or conductor, in A
+
+##### <a name="components_items_oneOf_i4_length"></a>5.1.5.9. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > length`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | Yes      |
 
-#### <a name="components_items_oneOf_i5"></a>5.1.6. Property `root > components > components items > oneOf > Connector`
+**Description:** Line length
+
+#### <a name="components_items_oneOf_i5"></a>5.1.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component`
+
+**Title:** Connector Component
 
 |                           |                   |
 | ------------------------- | ----------------- |
@@ -1028,17 +1167,19 @@ Specific value: `"Line"`
 
 **Description:** An optionally switchable zero impedance connection between terminals
 
-| Property                                                   | Pattern | Type             | Deprecated | Definition                                                   | Title/Description                              |
-| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| + [id](#components_items_oneOf_i5_id )                     | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                 | The component's unique ID                      |
-| + [type](#components_items_oneOf_i5_type )                 | No      | const            | No         | -                                                            | -                                              |
-| + [cons](#components_items_oneOf_i5_cons )                 | No      | array            | No         | In #/$defs/two_or_more_connections                           | A list of connections with at least 2 elements |
-| - [user_data](#components_items_oneOf_i5_user_data )       | No      | object           | No         | Same as [user_data](#user_data )                             | Non-e-json annotations                         |
-| - [in_service](#components_items_oneOf_i5_in_service )     | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service ) | If false, the component is out of service      |
-| - [i_max](#components_items_oneOf_i5_i_max )               | No      | number or null   | No         | -                                                            | -                                              |
-| - [switch_state](#components_items_oneOf_i5_switch_state ) | No      | enum (of string) | No         | -                                                            | -                                              |
+| Property                                                   | Pattern | Type             | Deprecated | Definition                                                   | Title/Description                     |
+| ---------------------------------------------------------- | ------- | ---------------- | ---------- | ------------------------------------------------------------ | ------------------------------------- |
+| + [id](#components_items_oneOf_i5_id )                     | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                 | Component ID                          |
+| + [type](#components_items_oneOf_i5_type )                 | No      | const            | No         | Same as [type](#components_items_oneOf_i0_type )             | Element Type                          |
+| + [cons](#components_items_oneOf_i5_cons )                 | No      | array            | No         | In #/$defs/two_or_more_connections                           | Two or More Connections               |
+| - [user_data](#components_items_oneOf_i5_user_data )       | No      | object           | No         | Same as [user_data](#user_data )                             | User Data                             |
+| - [in_service](#components_items_oneOf_i5_in_service )     | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service ) | In Service Indicator                  |
+| - [i_max](#components_items_oneOf_i5_i_max )               | No      | number or null   | No         | Same as [i_max](#components_items_oneOf_i1_i_max )           | Maximum Current per Phase / Conductor |
+| - [switch_state](#components_items_oneOf_i5_switch_state ) | No      | enum (of string) | No         | -                                                            | -                                     |
 
-##### <a name="components_items_oneOf_i5_id"></a>5.1.6.1. Property `root > components > components items > oneOf > item 5 > id`
+##### <a name="components_items_oneOf_i5_id"></a>5.1.6.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component > id`
+
+**Title:** Component ID
 
 |                        |                                     |
 | ---------------------- | ----------------------------------- |
@@ -1048,16 +1189,21 @@ Specific value: `"Line"`
 
 **Description:** The component's unique ID
 
-##### <a name="components_items_oneOf_i5_type"></a>5.1.6.2. Property `root > components > components items > oneOf > item 5 > type`
+##### <a name="components_items_oneOf_i5_type"></a>5.1.6.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component > type`
 
-|              |         |
-| ------------ | ------- |
-| **Type**     | `const` |
-| **Required** | Yes     |
+**Title:** Element Type
 
-Specific value: `"Connector"`
+|                        |                                         |
+| ---------------------- | --------------------------------------- |
+| **Type**               | `const`                                 |
+| **Required**           | Yes                                     |
+| **Same definition as** | [type](#components_items_oneOf_i0_type) |
 
-##### <a name="components_items_oneOf_i5_cons"></a>5.1.6.3. Property `root > components > components items > oneOf > item 5 > cons`
+**Description:** Element Type
+
+##### <a name="components_items_oneOf_i5_cons"></a>5.1.6.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component > cons`
+
+**Title:** Two or More Connections
 
 |                |                                 |
 | -------------- | ------------------------------- |
@@ -1099,20 +1245,24 @@ Specific value: `"Connector"`
 
 | Each item of this array must be                     | Description                                                                                                                  |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [connection](#components_items_oneOf_i5_cons_items) | A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected |
+| [Connection](#components_items_oneOf_i5_cons_items) | A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected |
 
-###### <a name="components_items_oneOf_i5_cons_items"></a>5.1.6.3.1. root > components > components items > oneOf > item 5 > cons > connection
+###### <a name="components_items_oneOf_i5_cons_items"></a>5.1.6.3.1. e-JSON schema > components > e-JSON Component > oneOf > Connector Component > cons > Connection
 
-|                           |                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                      |
-| **Required**              | No                                                                            |
-| **Additional properties** | Any type allowed                                                              |
-| **Same definition as**    | [components_items_oneOf_i1_cons_items](#components_items_oneOf_i1_cons_items) |
+**Title:** Connection
+
+|                           |                                                     |
+| ------------------------- | --------------------------------------------------- |
+| **Type**                  | `object`                                            |
+| **Required**              | No                                                  |
+| **Additional properties** | Any type allowed                                    |
+| **Same definition as**    | [Connection](#components_items_oneOf_i1_cons_items) |
 
 **Description:** A list of connections from element terminals. Each connection gives the node ID and phases to which the element is connected
 
-##### <a name="components_items_oneOf_i5_user_data"></a>5.1.6.4. Property `root > components > components items > oneOf > item 5 > user_data`
+##### <a name="components_items_oneOf_i5_user_data"></a>5.1.6.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component > user_data`
+
+**Title:** User Data
 
 |                           |                         |
 | ------------------------- | ----------------------- |
@@ -1123,7 +1273,9 @@ Specific value: `"Connector"`
 
 **Description:** Non-e-json annotations
 
-##### <a name="components_items_oneOf_i5_in_service"></a>5.1.6.5. Property `root > components > components items > oneOf > item 5 > in_service`
+##### <a name="components_items_oneOf_i5_in_service"></a>5.1.6.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component > in_service`
+
+**Title:** In Service Indicator
 
 |                        |                                                     |
 | ---------------------- | --------------------------------------------------- |
@@ -1134,14 +1286,19 @@ Specific value: `"Connector"`
 
 **Description:** If false, the component is out of service
 
-##### <a name="components_items_oneOf_i5_i_max"></a>5.1.6.6. Property `root > components > components items > oneOf > item 5 > i_max`
+##### <a name="components_items_oneOf_i5_i_max"></a>5.1.6.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component > i_max`
 
-|              |                  |
-| ------------ | ---------------- |
-| **Type**     | `number or null` |
-| **Required** | No               |
+**Title:** Maximum Current per Phase / Conductor
 
-##### <a name="components_items_oneOf_i5_switch_state"></a>5.1.6.7. Property `root > components > components items > oneOf > item 5 > switch_state`
+|                        |                                           |
+| ---------------------- | ----------------------------------------- |
+| **Type**               | `number or null`                          |
+| **Required**           | No                                        |
+| **Same definition as** | [i_max](#components_items_oneOf_i1_i_max) |
+
+**Description:** maximum current per phase or conductor, in A
+
+##### <a name="components_items_oneOf_i5_switch_state"></a>5.1.6.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Connector Component > switch_state`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -1153,7 +1310,9 @@ Must be one of:
 * "open"
 * "no_switch"
 
-#### <a name="components_items_oneOf_i6"></a>5.1.7. Property `root > components > components items > oneOf > Transformer`
+#### <a name="components_items_oneOf_i6"></a>5.1.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component`
+
+**Title:** Transformer Component
 
 |                           |                     |
 | ------------------------- | ------------------- |
@@ -1166,11 +1325,11 @@ Must be one of:
 
 | Property                                                         | Pattern | Type             | Deprecated | Definition                                                                       | Title/Description                          |
 | ---------------------------------------------------------------- | ------- | ---------------- | ---------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
-| - [id](#components_items_oneOf_i6_id )                           | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                                     | The component's unique ID                  |
-| - [type](#components_items_oneOf_i6_type )                       | No      | const            | No         | -                                                                                | -                                          |
-| - [cons](#components_items_oneOf_i6_cons )                       | No      | array            | No         | Same as [cons](#components_items_oneOf_i4_cons )                                 | A two element list of connections          |
-| - [user_data](#components_items_oneOf_i6_user_data )             | No      | object           | No         | Same as [user_data](#user_data )                                                 | Non-e-json annotations                     |
-| - [in_service](#components_items_oneOf_i6_in_service )           | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service )                     | If false, the component is out of service  |
+| - [id](#components_items_oneOf_i6_id )                           | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                                     | Component ID                               |
+| - [type](#components_items_oneOf_i6_type )                       | No      | const            | No         | Same as [type](#components_items_oneOf_i0_type )                                 | Element Type                               |
+| - [cons](#components_items_oneOf_i6_cons )                       | No      | array            | No         | Same as [cons](#components_items_oneOf_i4_cons )                                 | Two Connections                            |
+| - [user_data](#components_items_oneOf_i6_user_data )             | No      | object           | No         | Same as [user_data](#user_data )                                                 | User Data                                  |
+| - [in_service](#components_items_oneOf_i6_in_service )           | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service )                     | In Service Indicator                       |
 | - [vector_group](#components_items_oneOf_i6_vector_group )       | No      | string           | No         | -                                                                                | -                                          |
 | - [n_winding_pairs](#components_items_oneOf_i6_n_winding_pairs ) | No      | number           | No         | Same as [v_base](#components_items_oneOf_i0_v_base )                             | A positive number                          |
 | - [is_grounded_p](#components_items_oneOf_i6_is_grounded_p )     | No      | boolean          | No         | -                                                                                | -                                          |
@@ -1181,19 +1340,19 @@ Must be one of:
 | - [z_s](#components_items_oneOf_i6_z_s )                         | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
 | - [z0_p](#components_items_oneOf_i6_z0_p )                       | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
 | - [z0_s](#components_items_oneOf_i6_z0_s )                       | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [s_max](#components_items_oneOf_i6_s_max )                     | No      | number           | No         | -                                                                                | -                                          |
-| - [tap_range](#components_items_oneOf_i6_tap_range )             | No      | array of number  | No         | In #/$defs/two_number_array                                                      | An array containing two numbers            |
-| - [tap_factor](#components_items_oneOf_i6_tap_factor )           | No      | number           | No         | -                                                                                | -                                          |
-| - [tap_side](#components_items_oneOf_i6_tap_side )               | No      | enum (of string) | No         | -                                                                                | -                                          |
-| - [tap_changer](#components_items_oneOf_i6_tap_changer )         | No      | object           | No         | In #/$defs/tap_changer                                                           | Tap changer for a Transformer              |
-| - [taps](#components_items_oneOf_i6_taps )                       | No      | array of number  | No         | -                                                                                | -                                          |
+| - [s_max](#components_items_oneOf_i6_s_max )                     | No      | number           | No         | -                                                                                | Maximum Apparent Power                     |
+| - [tap_range](#components_items_oneOf_i6_tap_range )             | No      | array of number  | No         | In #/$defs/two_number_array                                                      | Tap Range                                  |
+| - [tap_factor](#components_items_oneOf_i6_tap_factor )           | No      | number           | No         | -                                                                                | Tap Factor                                 |
+| - [tap_side](#components_items_oneOf_i6_tap_side )               | No      | enum (of string) | No         | -                                                                                | Tap Side                                   |
+| - [tap_changer](#components_items_oneOf_i6_tap_changer )         | No      | object           | No         | In #/$defs/tap_changer                                                           | Tap Changer for Transformer                |
+| - [taps](#components_items_oneOf_i6_taps )                       | No      | array of number  | No         | -                                                                                | Tap Settings for Each Winding              |
 
 | All of(Requirement)                           |
 | --------------------------------------------- |
 | [item 0](#components_items_oneOf_i6_allOf_i0) |
 | [item 1](#components_items_oneOf_i6_allOf_i1) |
 
-##### <a name="components_items_oneOf_i6_allOf_i0"></a>5.1.7.1. Property `root > components > components items > oneOf > item 6 > allOf > item 0`
+##### <a name="components_items_oneOf_i6_allOf_i0"></a>5.1.7.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > allOf > item 0`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -1209,7 +1368,7 @@ Must be one of:
 * nom_turns_ratio
 * v_winding_base
 
-##### <a name="components_items_oneOf_i6_allOf_i1"></a>5.1.7.2. Property `root > components > components items > oneOf > item 6 > allOf > item 1`
+##### <a name="components_items_oneOf_i6_allOf_i1"></a>5.1.7.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > allOf > item 1`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -1222,7 +1381,7 @@ Must be one of:
 | [item 0](#components_items_oneOf_i6_allOf_i1_anyOf_i0) |
 | [item 1](#components_items_oneOf_i6_allOf_i1_anyOf_i1) |
 
-###### <a name="components_items_oneOf_i6_allOf_i1_anyOf_i0"></a>5.1.7.2.1. Property `root > components > components items > oneOf > item 6 > allOf > item 1 > anyOf > item 0`
+###### <a name="components_items_oneOf_i6_allOf_i1_anyOf_i0"></a>5.1.7.2.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > allOf > item 1 > anyOf > item 0`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -1233,7 +1392,7 @@ Must be one of:
 ###### <a name="autogenerated_heading_3"></a>5.1.7.2.1.1. The following properties are required
 * z_p
 
-###### <a name="components_items_oneOf_i6_allOf_i1_anyOf_i1"></a>5.1.7.2.2. Property `root > components > components items > oneOf > item 6 > allOf > item 1 > anyOf > item 1`
+###### <a name="components_items_oneOf_i6_allOf_i1_anyOf_i1"></a>5.1.7.2.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > allOf > item 1 > anyOf > item 1`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -1244,7 +1403,9 @@ Must be one of:
 ###### <a name="autogenerated_heading_4"></a>5.1.7.2.2.1. The following properties are required
 * z_s
 
-##### <a name="components_items_oneOf_i6_id"></a>5.1.7.3. Property `root > components > components items > oneOf > item 6 > id`
+##### <a name="components_items_oneOf_i6_id"></a>5.1.7.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > id`
+
+**Title:** Component ID
 
 |                        |                                     |
 | ---------------------- | ----------------------------------- |
@@ -1254,16 +1415,21 @@ Must be one of:
 
 **Description:** The component's unique ID
 
-##### <a name="components_items_oneOf_i6_type"></a>5.1.7.4. Property `root > components > components items > oneOf > item 6 > type`
+##### <a name="components_items_oneOf_i6_type"></a>5.1.7.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > type`
 
-|              |         |
-| ------------ | ------- |
-| **Type**     | `const` |
-| **Required** | No      |
+**Title:** Element Type
 
-Specific value: `"Transformer"`
+|                        |                                         |
+| ---------------------- | --------------------------------------- |
+| **Type**               | `const`                                 |
+| **Required**           | No                                      |
+| **Same definition as** | [type](#components_items_oneOf_i0_type) |
 
-##### <a name="components_items_oneOf_i6_cons"></a>5.1.7.5. Property `root > components > components items > oneOf > item 6 > cons`
+**Description:** Element Type
+
+##### <a name="components_items_oneOf_i6_cons"></a>5.1.7.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > cons`
+
+**Title:** Two Connections
 
 |                        |                                         |
 | ---------------------- | --------------------------------------- |
@@ -1273,7 +1439,9 @@ Specific value: `"Transformer"`
 
 **Description:** A two element list of connections
 
-##### <a name="components_items_oneOf_i6_user_data"></a>5.1.7.6. Property `root > components > components items > oneOf > item 6 > user_data`
+##### <a name="components_items_oneOf_i6_user_data"></a>5.1.7.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > user_data`
+
+**Title:** User Data
 
 |                           |                         |
 | ------------------------- | ----------------------- |
@@ -1284,7 +1452,9 @@ Specific value: `"Transformer"`
 
 **Description:** Non-e-json annotations
 
-##### <a name="components_items_oneOf_i6_in_service"></a>5.1.7.7. Property `root > components > components items > oneOf > item 6 > in_service`
+##### <a name="components_items_oneOf_i6_in_service"></a>5.1.7.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > in_service`
+
+**Title:** In Service Indicator
 
 |                        |                                                     |
 | ---------------------- | --------------------------------------------------- |
@@ -1295,14 +1465,14 @@ Specific value: `"Transformer"`
 
 **Description:** If false, the component is out of service
 
-##### <a name="components_items_oneOf_i6_vector_group"></a>5.1.7.8. Property `root > components > components items > oneOf > item 6 > vector_group`
+##### <a name="components_items_oneOf_i6_vector_group"></a>5.1.7.8. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > vector_group`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `string` |
 | **Required** | No       |
 
-##### <a name="components_items_oneOf_i6_n_winding_pairs"></a>5.1.7.9. Property `root > components > components items > oneOf > item 6 > n_winding_pairs`
+##### <a name="components_items_oneOf_i6_n_winding_pairs"></a>5.1.7.9. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > n_winding_pairs`
 
 |                        |                                             |
 | ---------------------- | ------------------------------------------- |
@@ -1312,21 +1482,21 @@ Specific value: `"Transformer"`
 
 **Description:** A positive number
 
-##### <a name="components_items_oneOf_i6_is_grounded_p"></a>5.1.7.10. Property `root > components > components items > oneOf > item 6 > is_grounded_p`
+##### <a name="components_items_oneOf_i6_is_grounded_p"></a>5.1.7.10. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > is_grounded_p`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
 | **Required** | No        |
 
-##### <a name="components_items_oneOf_i6_is_grounded_s"></a>5.1.7.11. Property `root > components > components items > oneOf > item 6 > is_grounded_s`
+##### <a name="components_items_oneOf_i6_is_grounded_s"></a>5.1.7.11. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > is_grounded_s`
 
 |              |           |
 | ------------ | --------- |
 | **Type**     | `boolean` |
 | **Required** | No        |
 
-##### <a name="components_items_oneOf_i6_nom_turns_ratio"></a>5.1.7.12. Property `root > components > components items > oneOf > item 6 > nom_turns_ratio`
+##### <a name="components_items_oneOf_i6_nom_turns_ratio"></a>5.1.7.12. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > nom_turns_ratio`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -1337,7 +1507,7 @@ Specific value: `"Transformer"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-##### <a name="components_items_oneOf_i6_v_winding_base"></a>5.1.7.13. Property `root > components > components items > oneOf > item 6 > v_winding_base`
+##### <a name="components_items_oneOf_i6_v_winding_base"></a>5.1.7.13. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > v_winding_base`
 
 |                |                                   |
 | -------------- | --------------------------------- |
@@ -1359,7 +1529,7 @@ Specific value: `"Transformer"`
 | ------------------------------------------------------------------ | ----------------- |
 | [positive_number](#components_items_oneOf_i6_v_winding_base_items) | A positive number |
 
-###### <a name="components_items_oneOf_i6_v_winding_base_items"></a>5.1.7.13.1. root > components > components items > oneOf > item 6 > v_winding_base > positive_number
+###### <a name="components_items_oneOf_i6_v_winding_base_items"></a>5.1.7.13.1. e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > v_winding_base > positive_number
 
 |                        |                                             |
 | ---------------------- | ------------------------------------------- |
@@ -1369,7 +1539,7 @@ Specific value: `"Transformer"`
 
 **Description:** A positive number
 
-##### <a name="components_items_oneOf_i6_z_p"></a>5.1.7.14. Property `root > components > components items > oneOf > item 6 > z_p`
+##### <a name="components_items_oneOf_i6_z_p"></a>5.1.7.14. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z_p`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -1380,7 +1550,7 @@ Specific value: `"Transformer"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-##### <a name="components_items_oneOf_i6_z_s"></a>5.1.7.15. Property `root > components > components items > oneOf > item 6 > z_s`
+##### <a name="components_items_oneOf_i6_z_s"></a>5.1.7.15. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z_s`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -1391,7 +1561,7 @@ Specific value: `"Transformer"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-##### <a name="components_items_oneOf_i6_z0_p"></a>5.1.7.16. Property `root > components > components items > oneOf > item 6 > z0_p`
+##### <a name="components_items_oneOf_i6_z0_p"></a>5.1.7.16. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z0_p`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -1402,7 +1572,7 @@ Specific value: `"Transformer"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-##### <a name="components_items_oneOf_i6_z0_s"></a>5.1.7.17. Property `root > components > components items > oneOf > item 6 > z0_s`
+##### <a name="components_items_oneOf_i6_z0_s"></a>5.1.7.17. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z0_s`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -1413,14 +1583,20 @@ Specific value: `"Transformer"`
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-##### <a name="components_items_oneOf_i6_s_max"></a>5.1.7.18. Property `root > components > components items > oneOf > item 6 > s_max`
+##### <a name="components_items_oneOf_i6_s_max"></a>5.1.7.18. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > s_max`
+
+**Title:** Maximum Apparent Power
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="components_items_oneOf_i6_tap_range"></a>5.1.7.19. Property `root > components > components items > oneOf > item 6 > tap_range`
+**Description:** Maximum apparent power, in VA
+
+##### <a name="components_items_oneOf_i6_tap_range"></a>5.1.7.19. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_range`
+
+**Title:** Tap Range
 
 |                |                          |
 | -------------- | ------------------------ |
@@ -1428,7 +1604,7 @@ Specific value: `"Transformer"`
 | **Required**   | No                       |
 | **Defined in** | #/$defs/two_number_array |
 
-**Description:** An array containing two numbers
+**Description:** Tap range, [min_tap, max_tap]
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1442,32 +1618,42 @@ Specific value: `"Transformer"`
 | ------------------------------------------------------------- | ----------- |
 | [tap_range items](#components_items_oneOf_i6_tap_range_items) | -           |
 
-###### <a name="components_items_oneOf_i6_tap_range_items"></a>5.1.7.19.1. root > components > components items > oneOf > item 6 > tap_range > tap_range items
+###### <a name="components_items_oneOf_i6_tap_range_items"></a>5.1.7.19.1. e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_range > tap_range items
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="components_items_oneOf_i6_tap_factor"></a>5.1.7.20. Property `root > components > components items > oneOf > item 6 > tap_factor`
+##### <a name="components_items_oneOf_i6_tap_factor"></a>5.1.7.20. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_factor`
+
+**Title:** Tap Factor
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="components_items_oneOf_i6_tap_side"></a>5.1.7.21. Property `root > components > components items > oneOf > item 6 > tap_side`
+**Description:** tap_factor x nom_turns_ratio is added to the turns ratio every time the tap increases by 1
+
+##### <a name="components_items_oneOf_i6_tap_side"></a>5.1.7.21. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_side`
+
+**Title:** Tap Side
 
 |              |                    |
 | ------------ | ------------------ |
 | **Type**     | `enum (of string)` |
 | **Required** | No                 |
 
+**Description:** Are taps on the primary or secondary side?
+
 Must be one of:
 * "primary"
 * "secondary"
 
-##### <a name="components_items_oneOf_i6_tap_changer"></a>5.1.7.22. Property `root > components > components items > oneOf > item 6 > tap_changer`
+##### <a name="components_items_oneOf_i6_tap_changer"></a>5.1.7.22. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer`
+
+**Title:** Tap Changer for Transformer
 
 |                           |                     |
 | ------------------------- | ------------------- |
@@ -1476,7 +1662,7 @@ Must be one of:
 | **Additional properties** | Any type allowed    |
 | **Defined in**            | #/$defs/tap_changer |
 
-**Description:** Tap changer for a Transformer
+**Description:** Specification of a transformer's tap changer, if present
 
 | Property                                                                 | Pattern | Type             | Deprecated | Definition                                                                       | Title/Description                          |
 | ------------------------------------------------------------------------ | ------- | ---------------- | ---------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
@@ -1488,7 +1674,7 @@ Must be one of:
 | - [ldc_impedance](#components_items_oneOf_i6_tap_changer_ldc_impedance ) | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
 | - [delay_seconds](#components_items_oneOf_i6_tap_changer_delay_seconds ) | No      | number           | No         | -                                                                                | -                                          |
 
-###### <a name="components_items_oneOf_i6_tap_changer_voltage_range"></a>5.1.7.22.1. Property `root > components > components items > oneOf > item 6 > tap_changer > voltage_range`
+###### <a name="components_items_oneOf_i6_tap_changer_voltage_range"></a>5.1.7.22.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > voltage_range`
 
 |              |         |
 | ------------ | ------- |
@@ -1507,7 +1693,7 @@ Must be one of:
 | ----------------------------------------------------------------------------- | ----------------- |
 | [positive_number](#components_items_oneOf_i6_tap_changer_voltage_range_items) | A positive number |
 
-###### <a name="components_items_oneOf_i6_tap_changer_voltage_range_items"></a>5.1.7.22.1.1. root > components > components items > oneOf > item 6 > tap_changer > voltage_range > positive_number
+###### <a name="components_items_oneOf_i6_tap_changer_voltage_range_items"></a>5.1.7.22.1.1. e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > voltage_range > positive_number
 
 |                        |                                             |
 | ---------------------- | ------------------------------------------- |
@@ -1517,7 +1703,7 @@ Must be one of:
 
 **Description:** A positive number
 
-###### <a name="components_items_oneOf_i6_tap_changer_indep_taps"></a>5.1.7.22.2. Property `root > components > components items > oneOf > item 6 > tap_changer > indep_taps`
+###### <a name="components_items_oneOf_i6_tap_changer_indep_taps"></a>5.1.7.22.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > indep_taps`
 
 |              |           |
 | ------------ | --------- |
@@ -1525,7 +1711,7 @@ Must be one of:
 | **Required** | No        |
 | **Default**  | `false`   |
 
-###### <a name="components_items_oneOf_i6_tap_changer_winding_side"></a>5.1.7.22.3. Property `root > components > components items > oneOf > item 6 > tap_changer > winding_side`
+###### <a name="components_items_oneOf_i6_tap_changer_winding_side"></a>5.1.7.22.3. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > winding_side`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -1536,7 +1722,7 @@ Must be one of:
 * "primary"
 * "secondary"
 
-###### <a name="components_items_oneOf_i6_tap_changer_winding_idx"></a>5.1.7.22.4. Property `root > components > components items > oneOf > item 6 > tap_changer > winding_idx`
+###### <a name="components_items_oneOf_i6_tap_changer_winding_idx"></a>5.1.7.22.4. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > winding_idx`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -1549,7 +1735,7 @@ Must be one of:
 | [item 0](#components_items_oneOf_i6_tap_changer_winding_idx_anyOf_i0) |
 | [item 1](#components_items_oneOf_i6_tap_changer_winding_idx_anyOf_i1) |
 
-###### <a name="components_items_oneOf_i6_tap_changer_winding_idx_anyOf_i0"></a>5.1.7.22.4.1. Property `root > components > components items > oneOf > item 6 > tap_changer > winding_idx > anyOf > item 0`
+###### <a name="components_items_oneOf_i6_tap_changer_winding_idx_anyOf_i0"></a>5.1.7.22.4.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > winding_idx > anyOf > item 0`
 
 |              |           |
 | ------------ | --------- |
@@ -1560,7 +1746,7 @@ Must be one of:
 | ------------ | ------ |
 | **Minimum**  | &ge; 0 |
 
-###### <a name="components_items_oneOf_i6_tap_changer_winding_idx_anyOf_i1"></a>5.1.7.22.4.2. Property `root > components > components items > oneOf > item 6 > tap_changer > winding_idx > anyOf > item 1`
+###### <a name="components_items_oneOf_i6_tap_changer_winding_idx_anyOf_i1"></a>5.1.7.22.4.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > winding_idx > anyOf > item 1`
 
 |              |         |
 | ------------ | ------- |
@@ -1569,7 +1755,7 @@ Must be one of:
 
 Specific value: `"avg"`
 
-###### <a name="components_items_oneOf_i6_tap_changer_ctrl"></a>5.1.7.22.5. Property `root > components > components items > oneOf > item 6 > tap_changer > ctrl`
+###### <a name="components_items_oneOf_i6_tap_changer_ctrl"></a>5.1.7.22.5. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > ctrl`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -1581,7 +1767,7 @@ Must be one of:
 * "auto"
 * "manual"
 
-###### <a name="components_items_oneOf_i6_tap_changer_ldc_impedance"></a>5.1.7.22.6. Property `root > components > components items > oneOf > item 6 > tap_changer > ldc_impedance`
+###### <a name="components_items_oneOf_i6_tap_changer_ldc_impedance"></a>5.1.7.22.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > ldc_impedance`
 
 |                           |                                                                         |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -1592,19 +1778,23 @@ Must be one of:
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
-###### <a name="components_items_oneOf_i6_tap_changer_delay_seconds"></a>5.1.7.22.7. Property `root > components > components items > oneOf > item 6 > tap_changer > delay_seconds`
+###### <a name="components_items_oneOf_i6_tap_changer_delay_seconds"></a>5.1.7.22.7. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > delay_seconds`
 
 |              |          |
 | ------------ | -------- |
 | **Type**     | `number` |
 | **Required** | No       |
 
-##### <a name="components_items_oneOf_i6_taps"></a>5.1.7.23. Property `root > components > components items > oneOf > item 6 > taps`
+##### <a name="components_items_oneOf_i6_taps"></a>5.1.7.23. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > taps`
+
+**Title:** Tap Settings for Each Winding
 
 |              |                   |
 | ------------ | ----------------- |
 | **Type**     | `array of number` |
 | **Required** | No                |
+
+**Description:** Tap settings, one per winding pair
 
 |                      | Array restrictions |
 | -------------------- | ------------------ |
@@ -1618,7 +1808,7 @@ Must be one of:
 | --------------------------------------------------- | ----------- |
 | [taps items](#components_items_oneOf_i6_taps_items) | -           |
 
-###### <a name="components_items_oneOf_i6_taps_items"></a>5.1.7.23.1. root > components > components items > oneOf > item 6 > taps > taps items
+###### <a name="components_items_oneOf_i6_taps_items"></a>5.1.7.23.1. e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > taps > taps items
 
 |              |          |
 | ------------ | -------- |
@@ -1626,4 +1816,4 @@ Must be one of:
 | **Required** | No       |
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2025-12-19 at 10:27:14 +1100
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2025-12-19 at 16:18:55 +1100
