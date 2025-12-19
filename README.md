@@ -3,7 +3,7 @@ Python library for the e-JSON electricity network data format.
 
 ## Introduction
 
-e-JSON is a JSON-based format for representing electricity network data. The `epyjson` package wraps e-JSON in a python `EJson` object that allows easy manipulation, for example retrieving network components, adding or removing components, depth first search traversal and so on.
+[e-JSON](e-json-schema.md) is a JSON-based format for representing electricity network data. See the [schema documentation](e-json-schema.md). The `epyjson` package wraps e-JSON in a python `EJson` object that allows easy manipulation, for example retrieving network components, adding or removing components, depth first search traversal and so on.
 
 The package consists of two modules: `ejson`, which provides the `EJson` class, and `utils`, which provides additional utilities for various manipulations.
 
