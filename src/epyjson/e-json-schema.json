@@ -55,7 +55,7 @@
             "maxItems": 2
         },
         "complex_number": {
-            "@ref": "#/$defs/two_number_array",
+            "$ref": "#/$defs/two_number_array",
             "description": "Complex number, stored as [<real>, <imag>]",
             "examples": [[4, 7]]
         },
