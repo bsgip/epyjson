@@ -394,7 +394,7 @@
                     "minItems": 1
                 }
             },
-            "required": ["id", "type", "cons"]
+            "required": ["id", "type", "cons", "wiring"]
         },
         "line_impedance_z_z0": {
             "title": "Line Impedance per Length as Sequence Components",
