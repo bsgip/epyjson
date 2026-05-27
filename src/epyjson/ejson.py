@@ -369,7 +369,7 @@ class EJson:
         Args:
             graph: e-JSON graph, result of make_graph(...)
             start_id: ID of the starting component for depth first search
-            stop_cb: Callback to decide where to prune the depth first search
+            stop_cb: Callback stop_cb(ejson: EJson, cur_comp: dict) -> bool to decide where to prune the search
 
         Returns:
             The mutated graph
@@ -390,7 +390,7 @@ class EJson:
         Args:
             graph: e-JSON graph, result of make_graph(...)
             start_id: ID of the starting component for depth first search
-            stop_cb: Callback to decide where to prune the depth first search
+            stop_cb: Callback stop_cb(ejson: EJson, cur_comp: dict) -> bool to decide where to prune the search
 
         Returns:
             The mutated graph
