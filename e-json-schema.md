@@ -287,12 +287,11 @@ Must be one of:
 
 ###### <a name="components_items_oneOf_i0_v_items"></a>5.1.1.5.1. e-JSON schema > components > e-JSON Component > oneOf > Node Component > v > complex_number
 
-|                           |                        |
-| ------------------------- | ---------------------- |
-| **Type**                  | `object`               |
-| **Required**              | No                     |
-| **Additional properties** | Any type allowed       |
-| **Defined in**            | #/$defs/complex_number |
+|                |                        |
+| -------------- | ---------------------- |
+| **Type**       | `array of number`      |
+| **Required**   | No                     |
+| **Defined in** | #/$defs/complex_number |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
@@ -304,6 +303,34 @@ Must be one of:
     7
 ]
 ```
+
+**Example:**
+
+```json
+[
+    4,
+    7
+]
+```
+
+|                      | Array restrictions |
+| -------------------- | ------------------ |
+| **Min items**        | 2                  |
+| **Max items**        | 2                  |
+| **Items unicity**    | False              |
+| **Additional items** | False              |
+| **Tuple validation** | See below          |
+
+| Each item of this array must be                           | Description |
+| --------------------------------------------------------- | ----------- |
+| [v items items](#components_items_oneOf_i0_v_items_items) | -           |
+
+###### <a name="components_items_oneOf_i0_v_items_items"></a>5.1.1.5.1.1. e-JSON schema > components > e-JSON Component > oneOf > Node Component > v > v items > v items items
+
+|              |          |
+| ------------ | -------- |
+| **Type**     | `number` |
+| **Required** | No       |
 
 ##### <a name="components_items_oneOf_i0_v_base"></a>5.1.1.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Node Component > v_base`
 
@@ -763,7 +790,7 @@ Must be one of:
 | + [type](#components_items_oneOf_i3_type )           | No      | const            | No         | Same as [type](#components_items_oneOf_i0_type )     | Element Type                              |
 | + [cons](#components_items_oneOf_i3_cons )           | No      | array            | No         | Same as [cons](#components_items_oneOf_i1_cons )     | Single Connection                         |
 | - [user_data](#components_items_oneOf_i3_user_data ) | No      | object           | No         | Same as [user_data](#user_data )                     | User Data                                 |
-| - [wiring](#components_items_oneOf_i3_wiring )       | No      | enum (of string) | No         | Same as [wiring](#components_items_oneOf_i2_wiring ) | Element Wiring                            |
+| + [wiring](#components_items_oneOf_i3_wiring )       | No      | enum (of string) | No         | Same as [wiring](#components_items_oneOf_i2_wiring ) | Element Wiring                            |
 | - [s](#components_items_oneOf_i3_s )                 | No      | array            | No         | -                                                    | Load Nominal or Present Power Consumption |
 
 ##### <a name="components_items_oneOf_i3_id"></a>5.1.4.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Load Component > id`
@@ -822,7 +849,7 @@ Must be one of:
 |                        |                                             |
 | ---------------------- | ------------------------------------------- |
 | **Type**               | `enum (of string)`                          |
-| **Required**           | No                                          |
+| **Required**           | Yes                                         |
 | **Same definition as** | [wiring](#components_items_oneOf_i2_wiring) |
 
 **Description:** Specification of load or transformer wiring; delta (LL) or wye (LG)
@@ -852,12 +879,11 @@ Must be one of:
 
 ###### <a name="components_items_oneOf_i3_s_items"></a>5.1.4.6.1. e-JSON schema > components > e-JSON Component > oneOf > Load Component > s > complex_number
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | No                                                                      |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | No                                                     |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
@@ -902,31 +928,29 @@ Must be one of:
 
 **Description:** Line impedance as positive and zero sequence Ohms per length unit. Negative sequence is assumed to be same as positive
 
-| Property                                              | Pattern | Type   | Deprecated | Definition                                                                       | Title/Description                          |
-| ----------------------------------------------------- | ------- | ------ | ---------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
-| + [z](#components_items_oneOf_i4_oneOf_i0_z )         | No      | object | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| + [z0](#components_items_oneOf_i4_oneOf_i0_z0 )       | No      | object | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [b_chg](#components_items_oneOf_i4_oneOf_i0_b_chg ) | No      | number | No         | -                                                                                | -                                          |
+| Property                                              | Pattern | Type            | Deprecated | Definition                                                      | Title/Description                          |
+| ----------------------------------------------------- | ------- | --------------- | ---------- | --------------------------------------------------------------- | ------------------------------------------ |
+| + [z](#components_items_oneOf_i4_oneOf_i0_z )         | No      | array of number | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| + [z0](#components_items_oneOf_i4_oneOf_i0_z0 )       | No      | array of number | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| - [b_chg](#components_items_oneOf_i4_oneOf_i0_b_chg ) | No      | number          | No         | -                                                               | -                                          |
 
 ###### <a name="components_items_oneOf_i4_oneOf_i0_z"></a>5.1.5.1.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per Length as Sequence Components > z`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | Yes                                                                     |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | Yes                                                    |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
 ###### <a name="components_items_oneOf_i4_oneOf_i0_z0"></a>5.1.5.1.2. Property `e-JSON schema > components > e-JSON Component > oneOf > Line Component > oneOf > Line Impedance per Length as Sequence Components > z0`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | Yes                                                                     |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | Yes                                                    |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
@@ -1323,29 +1347,29 @@ Must be one of:
 
 **Description:** A transformer
 
-| Property                                                         | Pattern | Type             | Deprecated | Definition                                                                       | Title/Description                          |
-| ---------------------------------------------------------------- | ------- | ---------------- | ---------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
-| - [id](#components_items_oneOf_i6_id )                           | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                                     | Component ID                               |
-| - [type](#components_items_oneOf_i6_type )                       | No      | const            | No         | Same as [type](#components_items_oneOf_i0_type )                                 | Element Type                               |
-| - [cons](#components_items_oneOf_i6_cons )                       | No      | array            | No         | Same as [cons](#components_items_oneOf_i4_cons )                                 | Two Connections                            |
-| - [user_data](#components_items_oneOf_i6_user_data )             | No      | object           | No         | Same as [user_data](#user_data )                                                 | User Data                                  |
-| - [in_service](#components_items_oneOf_i6_in_service )           | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service )                     | In Service Indicator                       |
-| - [vector_group](#components_items_oneOf_i6_vector_group )       | No      | string           | No         | -                                                                                | -                                          |
-| - [n_winding_pairs](#components_items_oneOf_i6_n_winding_pairs ) | No      | number           | No         | Same as [v_base](#components_items_oneOf_i0_v_base )                             | A positive number                          |
-| - [is_grounded_p](#components_items_oneOf_i6_is_grounded_p )     | No      | boolean          | No         | -                                                                                | -                                          |
-| - [is_grounded_s](#components_items_oneOf_i6_is_grounded_s )     | No      | boolean          | No         | -                                                                                | -                                          |
-| - [nom_turns_ratio](#components_items_oneOf_i6_nom_turns_ratio ) | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [v_winding_base](#components_items_oneOf_i6_v_winding_base )   | No      | array            | No         | In #/$defs/two_positive_number_array                                             | An array containing two positive numbers   |
-| - [z_p](#components_items_oneOf_i6_z_p )                         | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [z_s](#components_items_oneOf_i6_z_s )                         | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [z0_p](#components_items_oneOf_i6_z0_p )                       | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [z0_s](#components_items_oneOf_i6_z0_s )                       | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [s_max](#components_items_oneOf_i6_s_max )                     | No      | number           | No         | -                                                                                | Maximum Apparent Power                     |
-| - [tap_range](#components_items_oneOf_i6_tap_range )             | No      | array of number  | No         | In #/$defs/two_number_array                                                      | Tap Range                                  |
-| - [tap_factor](#components_items_oneOf_i6_tap_factor )           | No      | number           | No         | -                                                                                | Tap Factor                                 |
-| - [tap_side](#components_items_oneOf_i6_tap_side )               | No      | enum (of string) | No         | -                                                                                | Tap Side                                   |
-| - [tap_changer](#components_items_oneOf_i6_tap_changer )         | No      | object           | No         | In #/$defs/tap_changer                                                           | Tap Changer for Transformer                |
-| - [taps](#components_items_oneOf_i6_taps )                       | No      | array of number  | No         | -                                                                                | Tap Settings for Each Winding              |
+| Property                                                         | Pattern | Type             | Deprecated | Definition                                                      | Title/Description                          |
+| ---------------------------------------------------------------- | ------- | ---------------- | ---------- | --------------------------------------------------------------- | ------------------------------------------ |
+| - [id](#components_items_oneOf_i6_id )                           | No      | string           | No         | Same as [id](#components_items_oneOf_i0_id )                    | Component ID                               |
+| - [type](#components_items_oneOf_i6_type )                       | No      | const            | No         | Same as [type](#components_items_oneOf_i0_type )                | Element Type                               |
+| - [cons](#components_items_oneOf_i6_cons )                       | No      | array            | No         | Same as [cons](#components_items_oneOf_i4_cons )                | Two Connections                            |
+| - [user_data](#components_items_oneOf_i6_user_data )             | No      | object           | No         | Same as [user_data](#user_data )                                | User Data                                  |
+| - [in_service](#components_items_oneOf_i6_in_service )           | No      | boolean          | No         | Same as [in_service](#components_items_oneOf_i1_in_service )    | In Service Indicator                       |
+| - [vector_group](#components_items_oneOf_i6_vector_group )       | No      | string           | No         | -                                                               | -                                          |
+| - [n_winding_pairs](#components_items_oneOf_i6_n_winding_pairs ) | No      | number           | No         | Same as [v_base](#components_items_oneOf_i0_v_base )            | A positive number                          |
+| - [is_grounded_p](#components_items_oneOf_i6_is_grounded_p )     | No      | boolean          | No         | -                                                               | -                                          |
+| - [is_grounded_s](#components_items_oneOf_i6_is_grounded_s )     | No      | boolean          | No         | -                                                               | -                                          |
+| - [nom_turns_ratio](#components_items_oneOf_i6_nom_turns_ratio ) | No      | array of number  | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| - [v_winding_base](#components_items_oneOf_i6_v_winding_base )   | No      | array            | No         | In #/$defs/two_positive_number_array                            | An array containing two positive numbers   |
+| - [z_p](#components_items_oneOf_i6_z_p )                         | No      | array of number  | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| - [z_s](#components_items_oneOf_i6_z_s )                         | No      | array of number  | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| - [z0_p](#components_items_oneOf_i6_z0_p )                       | No      | array of number  | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| - [z0_s](#components_items_oneOf_i6_z0_s )                       | No      | array of number  | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| - [s_max](#components_items_oneOf_i6_s_max )                     | No      | number           | No         | -                                                               | Maximum Apparent Power                     |
+| - [tap_range](#components_items_oneOf_i6_tap_range )             | No      | array of number  | No         | In #/$defs/two_number_array                                     | Tap Range                                  |
+| - [tap_factor](#components_items_oneOf_i6_tap_factor )           | No      | number           | No         | -                                                               | Tap Factor                                 |
+| - [tap_side](#components_items_oneOf_i6_tap_side )               | No      | enum (of string) | No         | -                                                               | Tap Side                                   |
+| - [tap_changer](#components_items_oneOf_i6_tap_changer )         | No      | object           | No         | In #/$defs/tap_changer                                          | Tap Changer for Transformer                |
+| - [taps](#components_items_oneOf_i6_taps )                       | No      | array of number  | No         | -                                                               | Tap Settings for Each Winding              |
 
 | All of(Requirement)                           |
 | --------------------------------------------- |
@@ -1498,12 +1522,11 @@ Must be one of:
 
 ##### <a name="components_items_oneOf_i6_nom_turns_ratio"></a>5.1.7.12. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > nom_turns_ratio`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | No                                                                      |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | No                                                     |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
@@ -1541,45 +1564,41 @@ Must be one of:
 
 ##### <a name="components_items_oneOf_i6_z_p"></a>5.1.7.14. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z_p`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | No                                                                      |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | No                                                     |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
 ##### <a name="components_items_oneOf_i6_z_s"></a>5.1.7.15. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z_s`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | No                                                                      |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | No                                                     |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
 ##### <a name="components_items_oneOf_i6_z0_p"></a>5.1.7.16. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z0_p`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | No                                                                      |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | No                                                     |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
 ##### <a name="components_items_oneOf_i6_z0_s"></a>5.1.7.17. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > z0_s`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | No                                                                      |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | No                                                     |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
@@ -1614,11 +1633,11 @@ Must be one of:
 | **Additional items** | False              |
 | **Tuple validation** | See below          |
 
-| Each item of this array must be                               | Description |
-| ------------------------------------------------------------- | ----------- |
-| [tap_range items](#components_items_oneOf_i6_tap_range_items) | -           |
+| Each item of this array must be                           | Description |
+| --------------------------------------------------------- | ----------- |
+| [v items items](#components_items_oneOf_i0_v_items_items) | -           |
 
-###### <a name="components_items_oneOf_i6_tap_range_items"></a>5.1.7.19.1. e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_range > tap_range items
+###### <a name="components_items_oneOf_i0_v_items_items"></a>5.1.7.19.1. e-JSON schema > components > e-JSON Component > oneOf > Node Component > v > v items > v items items
 
 |              |          |
 | ------------ | -------- |
@@ -1664,15 +1683,15 @@ Must be one of:
 
 **Description:** Specification of a transformer's tap changer, if present
 
-| Property                                                                 | Pattern | Type             | Deprecated | Definition                                                                       | Title/Description                          |
-| ------------------------------------------------------------------------ | ------- | ---------------- | ---------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
-| + [voltage_range](#components_items_oneOf_i6_tap_changer_voltage_range ) | No      | array            | No         | -                                                                                | -                                          |
-| - [indep_taps](#components_items_oneOf_i6_tap_changer_indep_taps )       | No      | boolean          | No         | -                                                                                | -                                          |
-| + [winding_side](#components_items_oneOf_i6_tap_changer_winding_side )   | No      | enum (of string) | No         | -                                                                                | -                                          |
-| + [winding_idx](#components_items_oneOf_i6_tap_changer_winding_idx )     | No      | Combination      | No         | -                                                                                | -                                          |
-| - [ctrl](#components_items_oneOf_i6_tap_changer_ctrl )                   | No      | enum (of string) | No         | -                                                                                | -                                          |
-| - [ldc_impedance](#components_items_oneOf_i6_tap_changer_ldc_impedance ) | No      | object           | No         | Same as [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
-| - [delay_seconds](#components_items_oneOf_i6_tap_changer_delay_seconds ) | No      | number           | No         | -                                                                                | -                                          |
+| Property                                                                 | Pattern | Type             | Deprecated | Definition                                                      | Title/Description                          |
+| ------------------------------------------------------------------------ | ------- | ---------------- | ---------- | --------------------------------------------------------------- | ------------------------------------------ |
+| + [voltage_range](#components_items_oneOf_i6_tap_changer_voltage_range ) | No      | array            | No         | -                                                               | -                                          |
+| - [indep_taps](#components_items_oneOf_i6_tap_changer_indep_taps )       | No      | boolean          | No         | -                                                               | -                                          |
+| + [winding_side](#components_items_oneOf_i6_tap_changer_winding_side )   | No      | enum (of string) | No         | -                                                               | -                                          |
+| + [winding_idx](#components_items_oneOf_i6_tap_changer_winding_idx )     | No      | Combination      | No         | -                                                               | -                                          |
+| - [ctrl](#components_items_oneOf_i6_tap_changer_ctrl )                   | No      | enum (of string) | No         | -                                                               | -                                          |
+| - [ldc_impedance](#components_items_oneOf_i6_tap_changer_ldc_impedance ) | No      | array of number  | No         | Same as [two_number_array](#components_items_oneOf_i0_v_items ) | Complex number, stored as [<real>, <imag>] |
+| - [delay_seconds](#components_items_oneOf_i6_tap_changer_delay_seconds ) | No      | number           | No         | -                                                               | -                                          |
 
 ###### <a name="components_items_oneOf_i6_tap_changer_voltage_range"></a>5.1.7.22.1. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > voltage_range`
 
@@ -1769,12 +1788,11 @@ Must be one of:
 
 ###### <a name="components_items_oneOf_i6_tap_changer_ldc_impedance"></a>5.1.7.22.6. Property `e-JSON schema > components > e-JSON Component > oneOf > Transformer Component > tap_changer > ldc_impedance`
 
-|                           |                                                                         |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                |
-| **Required**              | No                                                                      |
-| **Additional properties** | Any type allowed                                                        |
-| **Same definition as**    | [components_items_oneOf_i0_v_items](#components_items_oneOf_i0_v_items) |
+|                        |                                                        |
+| ---------------------- | ------------------------------------------------------ |
+| **Type**               | `array of number`                                      |
+| **Required**           | No                                                     |
+| **Same definition as** | [two_number_array](#components_items_oneOf_i0_v_items) |
 
 **Description:** Complex number, stored as [<real>, <imag>]
 
@@ -1816,4 +1834,4 @@ Must be one of:
 | **Required** | No       |
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2025-12-19 at 16:18:55 +1100
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-06-24 at 12:57:21 +1000

@@ -1,5 +1,5 @@
 {
-    "$id": "https://bsgip.com/e-json",
+    "$id": "https://bsgip.com/e-json/1.0.1",
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "e-JSON schema",
     "type": "object",
@@ -493,15 +493,15 @@
             "type": "object",
             "description": "Tap changer for a Transformer",
             "properties": {
-				"voltage_range": {
+                "voltage_range": {
                     "type": "array",
                     "items": {
-						"$ref": "#/$defs/positive_number"
-					}
-				},
+                        "$ref": "#/$defs/positive_number"
+                    }
+                },
                 "indep_taps": {
                     "type": "boolean",
-					"default": false
+                    "default": false
                 },
                 "winding_side": {
                     "type": "string",
@@ -519,7 +519,7 @@
                 "ctrl": {
                     "type": "string",
                     "enum": ["auto", "manual"],
-					"default": "auto"
+                    "default": "auto"
                 },
                 "ldc_impedance": {
                     "$ref": "#/$defs/complex_number"
