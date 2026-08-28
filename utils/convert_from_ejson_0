@@ -51,19 +51,25 @@ def fromcplx(z):
 
 
 for c in netw['components']:
-    if c['type'] == 'Gen':
+    if c['type'] == 'Node':
+        if 'v_base' in c:
+            c['v_base'] *= vf
+
+    elif c['type'] == 'Gen':
         c['type'] = 'Generator'
 
-    if 'v_base' in c:
-        c['v_base'] *= vf
+        if 'v_setpoint' in c:
+            c['v_setpoint'] *= vf
 
-    if 'v_setpoint' in c:
-        c['v_setpoint'] *= vf
+    elif c['type'] == 'Load':
+        if 's_nom' in c:
+            c['s'] = c['s_nom'] * pf
+            del c['s_nom']
 
-    if 'v_winding_base' in c:
-        c['v_winding_base'] = [x * vf for x in c['v_winding_base']]
+    elif c['type'] == 'Transformer':
+        if 'v_winding_base' in c:
+            c['v_winding_base'] = [x * vf for x in c['v_winding_base']]
 
-    if c['type'] == 'Transformer':
         if 'z' in c:
             (c['z_p'], c['z_s']) = [fromcplx(tocplx(x) * zf) for x in c['z']]
             del c['z']
@@ -71,7 +77,8 @@ for c in netw['components']:
         if 'z0' in c:
             (c['z0_p'], c['z0_s']) = [fromcplx(tocplx(x) * zf) for x in c['z0']]
             del c['z0']
-    else:
+
+    elif c['type'] == 'Line':
         if 'z' in c:
             c['z'] = fromcplx(tocplx(c['z']) * zf)
 
