@@ -3,6 +3,7 @@ from ordered_set import OrderedSet
 from typing import Sequence, List
 
 import jsonschema
+from jsonschema.exceptions import best_match
 import math
 import networkx as nx
 import numpy as np
@@ -44,7 +45,7 @@ def user_data(comp: dict) -> dict:
 
     Args:
         comp: component dict
-    
+
     Returns:
         Component's user_data, or {} if absent
     '''
@@ -53,25 +54,25 @@ def user_data(comp: dict) -> dict:
 
 def is_in_service(comp: dict) -> bool:
     '''
-    Return compnent's in_service property, or True if absent 
+    Return compnent's in_service property, or True if absent
 
     Args:
         comp: component dict
-    
+
     Returns:
         True iff the component is in service
     '''
-    
+
     return comp.get('in_service', True)
 
 
 def switch_state(comp: dict) -> str:
     '''
-    Return compnent's switch_state property, or 'no_switch' if absent 
+    Return compnent's switch_state property, or 'no_switch' if absent
 
     Args:
         comp: component dict
-    
+
     Returns:
         String specifying component's switch_state
     '''
@@ -84,7 +85,7 @@ def is_closed(comp: dict) -> bool:
 
     Args:
         comp: component dict
-    
+
     Returns:
         True iff the component has a closed switch or is unswitched
     '''
@@ -98,7 +99,7 @@ def is_live(comp: dict) -> bool:
 
     Args:
         comp: component dict
-    
+
     Returns:
         True iff the component is electrically live.
     '''
@@ -148,7 +149,7 @@ def remove_not_live(netw: EJson) -> EJson:
             netw.remove_component(comp['id'])
 
     netw.remove_unconnected_nodes()
-    
+
     return netw
 
 
@@ -176,7 +177,7 @@ def collapse_elem(netw: EJson, cid: str) -> EJson:
     for node in other_nodes:
         assert len(list(netw.connections_from(node))) == 0
         netw.remove_component(node)
-    
+
     return netw
 
 
@@ -224,7 +225,7 @@ def merge_short_circuits(netw: EJson) -> EJson:
 
     A short circuit line is a line that fully short circuits all phases between two nodes. In such cases, we can
     simply remove the line and merge the two nodes.
-    
+
     Args:
         netw: eJson network
 
@@ -282,7 +283,7 @@ def is_short_circuit(comp: dict, netw: EJson) -> bool:
 def merge_dups(netw: EJson) -> EJson:
     '''
     Merge duplicated lines.
-    
+
     Args:
         netw: eJson network
 
@@ -347,8 +348,8 @@ def _get_strings(netw: EJson) -> EJson:
         subg: nx.MultiGraph = subg.subgraph(
             k for k, v in subg.nodes(data='comp') if v['type'] != 'Node' or subg.degree(k) == 2
         )
-        
-        # Elements should have degree > 0 in the subgraph 
+
+        # Elements should have degree > 0 in the subgraph
         subg: nx.MultiGraph = subg.subgraph(k for k in subg.nodes() if subg.degree(k) != 0)
         return subg
 
@@ -383,7 +384,7 @@ def _get_strings(netw: EJson) -> EJson:
                 continue
 
             ends = sorted(x for x in cc_subg.nodes if cc_subg.degree(x) == 1)
-        
+
         assert len(ends) == 2
         assert len(cc_subg.nodes) >= 3
 
@@ -451,7 +452,7 @@ def _merge_string(string: list, merge_i):
             new_line['b_chg'] = c2a(sum(bs * ls) / l_tot)
         new_line['in_service'] = new_is_in_service
         new_line['user_data'] = _merge_ud(lines)
-    
+
     new_connector = None
     if len(connectors) > 0:
         new_connector = copy.deepcopy(connectors[0])
@@ -477,7 +478,7 @@ def _merge_string(string: list, merge_i):
         retval.append(new_line)
 
     retval.append(string[-1])
-   
+
     return retval
 
 
@@ -490,13 +491,13 @@ def merge_strings(netw: EJson) -> EJson:
 
     Args:
         netw: eJson network
-    
+
     Returns:
         in-place mutated network
     '''
 
     strings = _get_strings(netw)
-    merge_ids = [x['id'] for x in netw.components() if x['id'].startswith('merge-')] 
+    merge_ids = [x['id'] for x in netw.components() if x['id'].startswith('merge-')]
     merge_i = max(int(x.split('-')[1]) for x in merge_ids) + 1 if len(merge_ids) > 0 else 0
     for string, phs in strings:
         merged = _merge_string(string, merge_i)
@@ -506,12 +507,12 @@ def merge_strings(netw: EJson) -> EJson:
 
         for c in merged[1:-1]:
             netw.add_comp(c)
-        
+
         for nd, elem in zip(merged[0:-1:2], merged[1::2]):
             netw.connect(nd['id'], elem['id'], 0, {'phs': phs})
         for nd, elem in zip(merged[2::2], merged[1::2]):
             netw.connect(nd['id'], elem['id'], 1, {'phs': phs})
-        
+
         merge_i += 1
 
     return netw
@@ -523,7 +524,7 @@ def reduce_network(netw: EJson) -> EJson:
 
     Args:
         netw: eJson network
-    
+
     Returns:
         in-place mutated network
     '''
@@ -566,7 +567,7 @@ def reduce_network(netw: EJson) -> EJson:
             break
 
     report_stats(netw, 'Final', logger.info)
-    
+
     return netw
 
 
@@ -577,7 +578,7 @@ def remove_unsupplied(netw: EJson) -> EJson:
 
     Args:
         netw: the EJson network
-    
+
     Returns:
         in-place mutated network
     '''
@@ -608,10 +609,10 @@ def annotate_upstream_transformers(netw: EJson, comp_types: list[str]) -> EJson:
     live-connected upstream transformers. Only those immediately upstream are
     included, e.g. we stop the depth first search branch after finding a
     transformer.
-    
+
     Args:
         netw: the EJson network
-    
+
     Returns:
         in-place mutated network
     '''
@@ -629,7 +630,7 @@ def add_map(netw: EJson, points: Sequence[dict]) -> EJson:
     Args:
         netw: the EJson network
         points: list of points, [{'x': <x>, 'y': <y>, 'lat': <lat>, 'lon': <lon>}, ...]
-    
+
     Returns:
         in-place mutated network
     '''
@@ -670,7 +671,7 @@ def add_map(netw: EJson, points: Sequence[dict]) -> EJson:
             c['xy'] = (A_inv @ (np.array(c['lat_long']) - b)).tolist()
         elif 'xy' in c:
             c['lat_long'] = (A @ np.array(c['xy']) + b).tolist()
-    
+
     return netw
 
 
@@ -689,7 +690,7 @@ def add_missing_locations(netw: EJson, keys=['xy', 'lat_long']) -> EJson:
     Args:
         netw: the EJson network
         keys: list containing elements of 'xy' and 'lat_long' to patch missing
-    
+
     Returns:
         in-place mutated network
     '''
@@ -716,7 +717,7 @@ def make_radial(netw: EJson, start_id: str) -> EJson:
     Args:
         netw: EJson network
         start_id: Depth first search starting component.
-    
+
     Returns:
         in-place mutated network
     '''
@@ -751,7 +752,7 @@ def make_radial(netw: EJson, start_id: str) -> EJson:
 
     for cid in to_remove:
         netw.remove_component(cid)
-    
+
     return netw
 
 
@@ -768,7 +769,7 @@ def make_single_phased(netw: EJson) -> EJson:
 
     Args:
         netw: e-JSON network
-    
+
     Returns:
         in-place mutated network
     '''
@@ -830,7 +831,7 @@ def make_single_phased(netw: EJson) -> EJson:
             tx['nom_turns_ratio'] = tx['nom_turns_ratio'] * mult[0] / mult[1]
         if 'taps' in tx:
             tx['taps'] = [tx['taps'][0]]
-    
+
     return netw
 
 
@@ -841,14 +842,14 @@ def scale_loads(netw: EJson, factor: complex) -> EJson:
     Args:
         netw: e-JSON object
         factor: scaling factor
-    
+
     Returns:
         in-place mutated network
     '''
 
     for load in netw.components('Load'):
         load['s_nom'] = [c2a(factor * a2c(x)) for x in load['s_nom']]
-    
+
     return netw
 
 
@@ -859,7 +860,7 @@ def set_balanced_loads(netw: EJson, tot_load: complex) -> EJson:
     Args:
         netw: e-JSON network
         factor: scaling factor
-    
+
     Returns:
         in-place mutated network
     '''
@@ -867,7 +868,7 @@ def set_balanced_loads(netw: EJson, tot_load: complex) -> EJson:
     for load in netw.components('Load'):
         n = len(load['s_nom'])
         load['s_nom'] = [c2a(tot_load / n)] * n
-    
+
     return netw
 
 
@@ -899,6 +900,29 @@ def audit(netw: EJson) -> dict:
     return aud
 
 
+def _truncate(value, limit=200):
+    s = repr(value)
+    return s if len(s) <= limit else s[:limit] + '...'
+
+
+def _describe_schema_error(e: jsonschema.exceptions.ValidationError) -> dict:
+    detail = {
+        'message': e.message,               # human-readable reason
+        'validator': e.validator,            # which keyword failed: 'required', 'type', 'enum', ...
+        'validator_value': e.validator_value,# the constraint that was violated
+        'schema_path': list(e.schema_path),  # where in the schema the rule lives
+        'instance': _truncate(e.instance),   # the actual offending value
+    }
+
+    # anyOf/oneOf/allOf hide the real reason in sub-errors — surface the best one
+    if e.context:
+        sub = best_match(e.context)
+        if sub is not None:
+            detail['likely_cause'] = f"{sub.message} (at {sub.json_path})"
+
+    return detail
+
+
 def _audit_schema(netw: EJson, aud: dict):
     probs = aud.setdefault(
         'schema_errors', {'description': 'List of JSON schema errors'}
@@ -907,13 +931,19 @@ def _audit_schema(netw: EJson, aud: dict):
     val = jsonschema.validators.Draft202012Validator(get_schema())
     errs = sorted(val.iter_errors(netw_ej), key=lambda e: e.path)
     for e in errs:
-        e_str = ' | '.join((x.strip() for x in str(e).split('\n') if len(x) > 0))
+        d = _describe_schema_error(e)
+        description = d['message']
+        if 'likely_cause' in d:
+            description += f" - likely cause: {d['likely_cause']}"
         probs.append({
             'type': 'error',
             'fixed': False,
             'details': {
                 'path': e.json_path,
-                'description': e_str
+                'validator': d['validator'],
+                'schema_path': '/'.join(str(p) for p in d['schema_path']),
+                'instance': d['instance'],
+                'description': description,
             }
         })
 
