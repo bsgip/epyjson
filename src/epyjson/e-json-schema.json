@@ -191,29 +191,17 @@
         "component": {
             "title": "e-JSON Component",
             "type": "object",
-            "description": "A component (Node/Infeeder/Gen/Load/Connector/Transformer)",
-            "oneOf": [
-                {
-                    "$ref": "#/$defs/Node"
-                },
-                {
-                    "$ref": "#/$defs/Infeeder"
-                },
-                {
-                    "$ref": "#/$defs/Gen"
-                },
-                {
-                    "$ref": "#/$defs/Load"
-                },
-                {
-                    "$ref": "#/$defs/Line"
-                },
-                {
-                    "$ref": "#/$defs/Connector"
-                },
-                {
-                    "$ref": "#/$defs/Transformer"
-                }
+            "properties": {
+                "type": {"enum": ["Node", "Infeeder", "Gen", "Load", "Line", "Connector", "Transformer"]}
+            },
+            "allOf": [
+                {"if": {"properties": {"type": {"const": "Node"}}}, "then": {"$ref": "#/$defs/Node"}},
+                {"if": {"properties": {"type": {"const": "Infeeder"}}}, "then": {"$ref": "#/$defs/Infeeder"}},
+                {"if": {"properties": {"type": {"const": "Gen"}}}, "then": {"$ref": "#/$defs/Gen"}},
+                {"if": {"properties": {"type": {"const": "Load"}}}, "then": {"$ref": "#/$defs/Load"}},
+                {"if": {"properties": {"type": {"const": "Line"}}}, "then": {"$ref": "#/$defs/Line"}},
+                {"if": {"properties": {"type": {"const": "Connector"}}}, "then": {"$ref": "#/$defs/Connector"}},
+                {"if": {"properties": {"type": {"const": "Transformer"}}}, "then": {"$ref": "#/$defs/Transformer"}}
             ]
         },
         "Node": {
