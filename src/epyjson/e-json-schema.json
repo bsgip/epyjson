@@ -381,6 +381,9 @@
                 "user_data": {
                     "$ref": "#/$defs/user_data"
                 },
+                "in_service": {
+                    "$ref": "#/$defs/in_service"
+                },
                 "wiring": {
                     "$ref": "#/$defs/wiring"
                 },
