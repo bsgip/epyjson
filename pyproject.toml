@@ -6,12 +6,34 @@ build-backend = "setuptools.build_meta"
 name = "epyjson"
 version = "0.2.5"
 description = "Python library for processing e-JSON"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+keywords = ["electricity network", "electricity grid", "power systems", "energy"]
+authors = [{name = "Dan Gordon"}]
+maintainers = [{name = "Dan Gordon"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: File Formats :: JSON :: JSON Schema",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "jsonschema",
     "numpy",
     "networkx",
     "ordered-set",
 ]
+
+[project.urls]
+Homepage = "https://github.com/bsgip/epyjson"
 
 [tool.setuptools.package-data]
 epyjson = ["e-json-schema.json"]
