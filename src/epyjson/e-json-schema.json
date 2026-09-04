@@ -1,5 +1,5 @@
 {
-    "$id": "https://bsgip.com/e-json/1.0.1",
+    "$id": "https://bsgip.com/e-json/1.0.2",
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "e-JSON schema",
     "type": "object",
