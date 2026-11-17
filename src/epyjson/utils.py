@@ -811,7 +811,7 @@ def make_single_phased(netw: EJson) -> EJson:
 
     for load in loads:
         load['wiring'] = 'wye'  # i.e. in this case, equivalent of a single line to ground.
-        load['s_nom'] = [c2a(sum((a2c(x) for x in load['s_nom'])))]
+        load['s'] = [c2a(sum((a2c(x) for x in load['s'])))]
 
     for tx in txs:
         vg = tx['vector_group']
@@ -848,7 +848,7 @@ def scale_loads(netw: EJson, factor: complex) -> EJson:
     '''
 
     for load in netw.components('Load'):
-        load['s_nom'] = [c2a(factor * a2c(x)) for x in load['s_nom']]
+        load['s'] = [c2a(factor * a2c(x)) for x in load['s']]
 
     return netw
 
@@ -866,8 +866,8 @@ def set_balanced_loads(netw: EJson, tot_load: complex) -> EJson:
     '''
 
     for load in netw.components('Load'):
-        n = len(load['s_nom'])
-        load['s_nom'] = [c2a(tot_load / n)] * n
+        n = len(load['s'])
+        load['s'] = [c2a(tot_load / n)] * n
 
     return netw
 

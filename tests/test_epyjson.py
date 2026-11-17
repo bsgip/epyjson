@@ -104,9 +104,9 @@ def test_remove_not_live():
 def test_set_loads():
     netw = epj.EJson.read_from_file(test_netws_path / 'netw_generic_a.json')
     epj.set_balanced_loads(netw, 12.0 + 3.0j)
-    assert netw.component('ld8')['s_nom'] == [[4.0, 1.0], [4.0, 1.0], [4.0, 1.0]]
+    assert netw.component('ld8')['s'] == [[4.0, 1.0], [4.0, 1.0], [4.0, 1.0]]
     epj.scale_loads(netw, 2.0)
-    assert netw.component('ld8')['s_nom'] == [[8.0, 2.0], [8.0, 2.0], [8.0, 2.0]]
+    assert netw.component('ld8')['s'] == [[8.0, 2.0], [8.0, 2.0], [8.0, 2.0]]
 
 
 def test_make_single_phased():
@@ -125,8 +125,8 @@ def test_make_single_phased():
     for tx in netw_sp.components(ctype='Transformer'):
         assert tx['vector_group'] == 'yy0'
 
-    assert netw_sp.component('ld8')['s_nom'] == [[1.0, 1.0]]
-    assert netw_sp.component('ld9')['s_nom'] == [[3.0, 1.0]]
+    assert netw_sp.component('ld8')['s'] == [[1.0, 1.0]]
+    assert netw_sp.component('ld9')['s'] == [[3.0, 1.0]]
 
     def close(a, b):
         return abs(complex(*a) - complex(*b)) < 1e-9
