@@ -1,19 +1,16 @@
-#! /usr/bin/env python3
-# vim:tw=120:et
-
 import copy
-from collections import namedtuple
 import importlib.resources
 import json
 import logging
 import sys
-from typing import Any, Callable, Generator, List, Optional, Tuple, Union
+from collections import namedtuple
+from collections.abc import Callable, Generator
+from typing import Any
 
 import networkx as nx
 from ordered_set import OrderedSet
 
 from .dumper import dump_pretty, dumps_pretty
-
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +87,10 @@ class EJson:
                 try:
                     node_id = con['node']
                     self.connect(k, node_id, i, {k: v for k, v in con.items() if k != 'node'})
-                except KeyError as e:
+                except KeyError:
                     logger.error(f'Connection to non-existent node {node_id} for component {c["id"]} '
                                  f'with cons {c["cons"]}')
-                    raise e
+                    raise
 
     def __str__(self):
         return dumps_pretty(self.raw_ejson)
@@ -140,12 +137,14 @@ class EJson:
 
         return self.properties | {'components': comps}
 
-    def components(self, ctype: str = None, nodes_only: bool = False, elems_only: bool = False) -> Generator:
+    def components(self, ctype: str | None = None, nodes_only: bool = False, elems_only: bool = False) -> Generator:
         '''
         Generator to iterate through components in network.
 
         Args:
             ctype: Optional filter(id_, type_, dict_) for components to be included
+            nodes_only: Only return nodes
+            elems_only: Only return elements
 
         Returns:
             Generator over component dicts
@@ -219,7 +218,7 @@ class EJson:
         return self.graph.neighbors(cid)
 
     def reconnect_elem(self, cid, node_remap: dict):
-        cons = list(list(x) for x in self.connections_from(cid))
+        cons = [list(x) for x in self.connections_from(cid)]
 
         for con in cons:
             self.graph.remove_edge(con[0], con[1], con[2])
@@ -255,13 +254,13 @@ class EJson:
 
     def dfs(
         self,
-        start: Union[dict, str],
-        pre_cb: Optional[Callable] = None,
-        stop_cb: Optional[Callable] = None,
-        accum_cb: Optional[Callable] = None,
-        post_cb: Optional[Callable] = None,
-        accum: Any = None
-    ) -> Tuple[List[dict], Any]:
+        start: dict | str,
+        pre_cb: Callable | None = None,
+        stop_cb: Callable | None = None,
+        accum_cb: Callable | None = None,
+        post_cb: Callable | None = None,
+        accum: Any | None = None
+    ) -> tuple[list[dict], Any]:
 
         '''
         Depth first search on the network graph. Starting from start, follow the graph, adding to visited for each
@@ -306,11 +305,11 @@ class EJson:
     def _dfs(
         self,
         curr_comp_id: str,
-        pre_cb: Optional[Callable],
-        post_cb: Optional[Callable],
+        pre_cb: Callable | None,
+        post_cb: Callable | None,
         visited: OrderedSet,
         accum: Any
-    ) -> Tuple[List[str], Any]:
+    ) -> tuple[list[str], Any]:
 
         if (curr_comp_id in visited):
             return visited, accum
@@ -345,7 +344,7 @@ class EJson:
 
         ordering = {n: i for i, n in enumerate(nx.dfs_preorder_nodes(self.graph, source=start_id))}
         new_graph = nx.MultiGraph()
-        new_graph.add_nodes_from((k, {'comp': self.component(k)}) for k in ordering.keys())
+        new_graph.add_nodes_from((k, {'comp': self.component(k)}) for k in ordering)
 
         # Re-order connections. Don't mess with transformer ordering as this would swap primary and secondary.
         for _, c in new_graph.nodes(data='comp'):
@@ -362,14 +361,13 @@ class EJson:
 
         return self
 
-    def trim(self, start_id: str, stop_cb: Callable = None):
+    def trim(self, start_id: str, stop_cb: Callable | None = None):
         '''
         Remove selected components.
 
         Args:
-            graph: e-JSON graph, result of make_graph(...)
             start_id: ID of the starting component for depth first search
-            stop_cb: Callback stop_cb(ejson: EJson, cur_comp: dict) -> bool to decide where to prune the search
+            stop_cb(ejson, curr_comp): Convenience alternative to pre_cb without accum, return stop.
 
         Returns:
             The mutated graph
@@ -383,14 +381,13 @@ class EJson:
 
         return self
 
-    def only(self, start_id: str, stop_cb: Callable = None):
+    def only(self, start_id: str, stop_cb: Callable | None = None):
         '''
         Keep only selected components.
 
         Args:
-            graph: e-JSON graph, result of make_graph(...)
             start_id: ID of the starting component for depth first search
-            stop_cb: Callback stop_cb(ejson: EJson, cur_comp: dict) -> bool to decide where to prune the search
+            stop_cb(ejson, curr_comp): Convenience alternative to pre_cb without accum, return stop.
 
         Returns:
             The mutated graph
@@ -441,7 +438,7 @@ class EJson:
         return self
 
 
-def _netw_components(netw_ejson, ctype: str = None) -> Generator:
+def _netw_components(netw_ejson, ctype: str | None = None) -> Generator:
     '''
     Generator to iterate through components in an e-JSON network.
 
@@ -462,3 +459,5 @@ def _graph_add_node(graph: nx.MultiGraph, c: dict):
 
 def _graph_add_edge(graph: nx.MultiGraph, elem_id: str, node_id: str, con_idx: int, con: dict):
     graph.add_edge(elem_id, node_id, key=con_idx, con=con)
+
+# vim:tw=120:et
